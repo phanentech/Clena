@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
-import { LogOut } from "lucide-react";
+import Link from "next/link";
+import { Bell, ChevronRight, CircleHelp, CreditCard, LogOut, Repeat, Star } from "lucide-react";
+import { PreferencesForm } from "@/components/portal/preferences-form";
 import { AddressBook, ProfileForm } from "@/components/portal/profile-forms";
-import { PortalScreen, pButton } from "@/components/portal/ui";
+import { PCard, PortalScreen, pButton } from "@/components/portal/ui";
 import { requireCustomer } from "@/lib/portal";
 import { createClient } from "@/lib/supabase/server";
 import { portalSignOut } from "../actions";
@@ -13,7 +15,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
   const { business, customer, user } = await requireCustomer(slug);
   const supabase = await createClient();
   const [{ data: addresses }, { count }] = await Promise.all([
-    supabase.from("customer_addresses").select("id, label, line1, line2, city, state, landmark, is_default").eq("customer_id", customer.id).order("is_default", { ascending: false }).order("created_at"),
+    supabase.from("customer_addresses").select("id, label, line1, line2, city, state, landmark, is_default, zone_id").eq("customer_id", customer.id).order("is_default", { ascending: false }).order("created_at"),
     supabase.from("orders").select("id", { count: "exact", head: true }).eq("customer_id", customer.id).is("cancelled_at", null),
   ]);
   const initials = customer.full_name.split(/\s+/).slice(0, 2).map((w) => w[0]?.toUpperCase()).join("");
@@ -29,8 +31,25 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           </div>
         </div>
       }>
+      <PCard className="mb-4 divide-y divide-[#EEF1F5]">
+        {[
+          [`/b/${slug}/notifications`, Bell, "Notifications", true],
+          [`/b/${slug}/payments`, CreditCard, "Payments & receipts", true],
+          [`/b/${slug}/subscriptions`, Repeat, "Subscriptions", Boolean(business.laundry_ops) && (business.plans ?? []).length > 0],
+          [`/b/${slug}/rewards`, Star, "Rewards & referrals", Boolean(business.laundry_ops && business.loyalty?.enabled)],
+          [`/b/${slug}/support`, CircleHelp, "Help & support", true],
+        ].filter((x) => x[3]).map(([href, Icon, label]) => {
+          const I = Icon as typeof Bell;
+          return (
+            <Link key={href as string} href={href as string} className="flex items-center gap-3 px-4 py-3.5 text-[14px] font-medium hover:bg-[#F6F8FB]">
+              <I className="size-[18px] text-[var(--p-secondary)]" /><span className="flex-1">{label as string}</span><ChevronRight className="size-4 text-[#B8C1CE]" />
+            </Link>
+          );
+        })}
+      </PCard>
       <div className="grid gap-4 lg:grid-cols-2 lg:items-start">
-        <AddressBook slug={slug} addresses={addresses ?? []} />
+        <AddressBook slug={slug} addresses={addresses ?? []} zones={business.zones ?? []} />
+        {business.laundry_ops && <PreferencesForm slug={slug} prefs={customer.preferences} />}
         <ProfileForm slug={slug} email={user.email} customer={customer} />
       </div>
       <form action={portalSignOut.bind(null, slug)} className="mt-6">

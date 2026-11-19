@@ -38,6 +38,18 @@ export default async function SupportPage({ params, searchParams }: { params: Pr
             <ChatComposer action={sendMessage.bind(null, slug)} orderId={orderNumber ? order : null} />
           </div>
         </PCard>
+        <div className="grid gap-4">
+        {(p.faqs ?? []).length > 0 && (
+          <PCard className="p-2">
+            <p className="px-2 pt-2 text-[13px] font-semibold">Common questions</p>
+            {(p.faqs ?? []).map((f, i) => (
+              <details key={i} className="group rounded-[calc(var(--p-radius)*0.6)] px-2.5 py-2 open:bg-[#F6F8FB]">
+                <summary className="cursor-pointer list-none text-[13px] font-medium marker:hidden">{f.q}</summary>
+                <p className="mt-1.5 text-[12.5px] text-[#5B6B80]">{f.a}</p>
+              </details>
+            ))}
+          </PCard>
+        )}
         {(p.support_phone || wa || p.support_email) && (
           <PCard className="grid gap-1 p-2">
             <p className="px-2 pt-2 text-[13px] font-semibold">Other ways to reach us</p>
@@ -46,6 +58,8 @@ export default async function SupportPage({ params, searchParams }: { params: Pr
             {p.support_email && <a href={`mailto:${p.support_email}`} className="flex items-center gap-3 rounded-[calc(var(--p-radius)*0.6)] p-2.5 text-[13.5px] hover:bg-[#F6F8FB]"><Mail className="size-4 text-[var(--p-secondary)]" />{p.support_email}</a>}
           </PCard>
         )}
+        {business.laundry_ops && <p className="px-2 text-[12px] text-[#8A96A8]">Problem with an order? Open the order and tap “Report a problem” so we can track it properly.</p>}
+        </div>
       </div>
     </PortalScreen>
   );

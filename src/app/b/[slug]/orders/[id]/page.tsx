@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { CheckCircle2, Landmark, MessageCircle, Phone } from "lucide-react";
+import { CheckCircle2, KeyRound, Landmark, MessageCircle, Phone, Receipt, Scale } from "lucide-react";
 import { CancelOrder } from "@/components/portal/cancel-order";
+import { FeedbackForm, PendingAdjustments, ReportIssue } from "@/components/portal/order-extras";
 import { Chip, PCard, PortalScreen, StageTrack } from "@/components/portal/ui";
 import { requireCustomer } from "@/lib/portal";
 import { getMyOrders, itemSummary } from "@/lib/portal-orders";
@@ -19,12 +20,20 @@ export default async function OrderDetailsPage({ params, searchParams }: { param
   if (!order) notFound();
   const supabase = await createClient();
   const [{ data: d }, { data: hist }, { data: pays }, { data: t }] = await Promise.all([
-    supabase.from("orders").select("pickup_address, delivery_address, pickup_at, expected_at, subtotal, tax_total, delivery_fee, service_fee, discount_total, promo_code, notes, cancel_reason, order_items(description, quantity, unit_price, line_total, pricing_model)").eq("id", id).single(),
+    supabase.from("orders").select("pickup_address, delivery_address, pickup_at, expected_at, subtotal, tax_total, delivery_fee, service_fee, express_fee, adjustments_total, is_express, points_redeemed, received_item_count, received_weight_kg, on_hold, discount_total, promo_code, notes, cancel_reason, order_items(description, quantity, unit_price, line_total, pricing_model)").eq("id", id).single(),
     supabase.from("order_status_history").select("to_stage_id, created_at").eq("order_id", id).order("created_at"),
     supabase.from("payments").select("amount, method, created_at, status").eq("order_id", id).eq("status", "successful").order("created_at"),
     supabase.from("tenants").select("settings").eq("id", business.id).single(),
   ]);
   if (!d) notFound();
+  const laundry = Boolean(business.laundry_ops);
+  const [{ data: adjs }, { data: media }, { data: fb }, { data: otp }, { data: refunds }] = laundry ? await Promise.all([
+    supabase.from("order_adjustments").select("id, kind, amount, reason, status").eq("order_id", id).order("created_at"),
+    supabase.from("ops_media").select("id, kind, data_url, caption").eq("order_id", id).in("kind", ["customer_photo", "proof_photo", "photo"]).order("created_at").limit(12),
+    supabase.from("order_feedback").select("rating, comment").eq("order_id", id).maybeSingle(),
+    supabase.rpc("my_delivery_otp", { p_order: id }),
+    supabase.from("refunds").select("amount, created_at").eq("order_id", id),
+  ]) : [{ data: [] }, { data: [] }, { data: null }, { data: null }, { data: [] }];
   const tz = business.timezone;
   const when = (v: string | null) => v ? new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", timeZone: tz }).format(new Date(v)) : null;
   const reachedAt = new Map((hist ?? []).map((h) => [h.to_stage_id, h.created_at]));
@@ -33,6 +42,9 @@ export default async function OrderDetailsPage({ params, searchParams }: { param
   const balance = order.total - order.amount_paid;
   const canCancel = !order.cancelled_at && order.stageIndex === 0 && order.amount_paid === 0;
   const p = business.portal;
+  const pendingAdj = (adjs ?? []).filter((a) => a.status === "pending_approval").map((a) => ({ ...a, amount: Number(a.amount), label: `${Number(a.amount) >= 0 ? "+" : "−"}${money(Math.abs(Number(a.amount)))}` }));
+  const appliedAdj = (adjs ?? []).filter((a) => a.status === "applied");
+  const doneStage = order.done && !order.cancelled_at;
 
   return (
     <PortalScreen business={business} title="Order details" back={`/b/${slug}/orders`} wide>
@@ -44,6 +56,14 @@ export default async function OrderDetailsPage({ params, searchParams }: { param
       )}
       <div className="grid gap-4 lg:grid-cols-[1fr_360px] lg:items-start">
         <div className="grid gap-4">
+          {laundry && <PendingAdjustments slug={slug} items={pendingAdj} />}
+          {laundry && otp && (
+            <PCard className="flex items-center gap-4 p-4">
+              <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[color-mix(in_srgb,var(--p-accent)_16%,white)] text-[var(--p-accent)]"><KeyRound className="size-5" /></span>
+              <div className="min-w-0 flex-1"><p className="text-[13.5px] font-semibold">Delivery code</p><p className="text-[12px] text-[#6B7A90]">Give this to the rider only when you receive your order.</p></div>
+              <span className="text-[26px] font-semibold tracking-[0.2em] tabular-nums">{otp as string}</span>
+            </PCard>
+          )}
           <PCard className="p-4">
             <div className="flex items-start justify-between gap-3">
               <p className="text-[16px] font-semibold">
@@ -53,6 +73,7 @@ export default async function OrderDetailsPage({ params, searchParams }: { param
             </div>
             <p className="mt-1 text-[12.5px] text-[#6B7A90]">{order.order_number} · {itemSummary(order.items)}{d.expected_at && !order.done ? ` · Due ${when(d.expected_at)}` : ""}</p>
             <StageTrack stages={order.stages} currentIndex={order.stageIndex} cancelled={Boolean(order.cancelled_at)} />
+            {d.on_hold && !order.cancelled_at && <p className="mt-3 rounded-[calc(var(--p-radius)*0.5)] bg-[#FFF4E5] p-2.5 text-[12.5px] text-[#9A5B00]">We&apos;re checking something on this order and will update you shortly.</p>}
             {order.cancelled_at && d.cancel_reason && <p className="mt-3 text-[12.5px] text-[#6B7A90]">Reason: {d.cancel_reason}</p>}
 
             <ol className="mt-5 grid gap-0">
@@ -104,7 +125,24 @@ export default async function OrderDetailsPage({ params, searchParams }: { param
               </div>
             ))}
             {d.notes && <p className="px-4 py-3 text-[12.5px] text-[#6B7A90]">Your note: {d.notes}</p>}
+            {(d.received_weight_kg || d.received_item_count) && (
+              <p className="flex items-center gap-2 px-4 py-3 text-[12.5px] text-[#4A5A70]"><Scale className="size-4" />Confirmed at our facility: {[d.received_item_count && `${d.received_item_count} items`, d.received_weight_kg && `${Number(d.received_weight_kg)} kg`].filter(Boolean).join(" · ")}</p>
+            )}
           </PCard>
+
+          {(media ?? []).length > 0 && (
+            <PCard className="p-4">
+              <p className="text-[14px] font-semibold">Photos</p>
+              <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {(media ?? []).map((m) => (
+                  // eslint-disable-next-line @next/next/no-img-element -- stored data URL
+                  <img key={m.id} src={m.data_url} alt={m.caption ?? (m.kind === "proof_photo" ? "Delivery proof" : "Order photo")} className="aspect-square w-full rounded-[10px] object-cover" />
+                ))}
+              </div>
+            </PCard>
+          )}
+
+          {laundry && doneStage && <FeedbackForm slug={slug} orderId={order.id} existing={fb ? { rating: fb.rating, comment: fb.comment } : null} />}
         </div>
 
         <div className="grid gap-4 lg:sticky lg:top-4">
@@ -125,10 +163,13 @@ export default async function OrderDetailsPage({ params, searchParams }: { param
               <Line k="Services" v={money(d.subtotal)} />
               {Number(d.tax_total) > 0 && <Line k="Tax" v={money(d.tax_total)} />}
               {Number(d.service_fee) > 0 && <Line k="Service charge" v={money(d.service_fee)} />}
+              {Number(d.express_fee) > 0 && <Line k="Express" v={money(d.express_fee)} />}
               {Number(d.delivery_fee) > 0 && <Line k="Collection & delivery" v={money(d.delivery_fee)} />}
+              {appliedAdj.map((a) => <Line key={a.id} k={a.reason} v={`${Number(a.amount) >= 0 ? "+" : "−"}${money(Math.abs(Number(a.amount)))}`} />)}
               {Number(d.discount_total) > 0 && <Line k={`Discount${d.promo_code ? ` (${d.promo_code})` : ""}`} v={`−${money(d.discount_total)}`} />}
               <div className="flex justify-between border-t border-[#EEF1F5] pt-2.5"><dt className="font-semibold">Total</dt><dd className="font-semibold tabular-nums">{money(order.total)}</dd></div>
               {(pays ?? []).map((pmt, i) => <Line key={i} k={`Paid by ${pmt.method.replaceAll("_", " ")}`} v={money(pmt.amount)} />)}
+              {(refunds ?? []).map((r, i) => <Line key={`r${i}`} k="Refunded" v={`−${money(r.amount)}`} />)}
               {!order.cancelled_at && balance > 0 && <div className="flex justify-between"><dt className="font-medium text-[#9A5B00]">To pay</dt><dd className="font-semibold tabular-nums text-[#9A5B00]">{money(balance)}</dd></div>}
             </dl>
             {!order.cancelled_at && balance > 0 && bank.account_number && (
@@ -143,6 +184,10 @@ export default async function OrderDetailsPage({ params, searchParams }: { param
             )}
           </PCard>
 
+          {(pays ?? []).length > 0 && (
+            <Link href={`/b/${slug}/orders/${order.id}/receipt`} className={`${"inline-flex h-11 items-center justify-center gap-2 rounded-full border border-[#DCE2EB] bg-white px-5 text-[14px] font-medium"}`}><Receipt className="size-4" />View receipt</Link>
+          )}
+          {laundry && !order.cancelled_at && order.stageIndex > 0 && <ReportIssue slug={slug} orderId={order.id} />}
           {canCancel && <CancelOrder slug={slug} orderId={order.id} />}
         </div>
       </div>

@@ -10,12 +10,14 @@ export default async function ReviewPage({ params }: { params: Promise<{ slug: s
   const { slug } = await params;
   const { business, customer } = await requireCustomer(slug);
   const supabase = await createClient();
-  const { data: addresses } = await supabase.from("customer_addresses").select("id, label, line1, line2, city, is_default")
+  const [{ data: cust }] = await Promise.all([supabase.from("customers").select("loyalty_points").eq("id", customer.id).single()]);
+  const { data: addresses } = await supabase.from("customer_addresses").select("id, label, line1, line2, city, is_default, zone_id")
     .eq("customer_id", customer.id).order("is_default", { ascending: false }).order("created_at");
   return (
     <PortalScreen business={business} title="Review order" back={`/b/${slug}/services`} wide>
       <ReviewOrder slug={slug} services={business.services} portal={business.portal} currency={business.currency}
-        timezone={business.timezone || "Africa/Lagos"} industry={business.industry} addresses={addresses ?? []} />
+        timezone={business.timezone || "Africa/Lagos"} industry={business.industry} addresses={addresses ?? []}
+        zones={business.zones} loyalty={business.loyalty} pointsBalance={cust?.loyalty_points ?? 0} />
     </PortalScreen>
   );
 }

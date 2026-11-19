@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Clock, MessageCircle, PackageCheck, Truck } from "lucide-react";
+import { ArrowRight, ArrowUpRight, Bell, CalendarClock, Clock, MessageCircle, PackageCheck, Repeat, Star, Truck } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
 import { GateScreen } from "@/components/portal/gate";
 import { ServiceIcon } from "@/components/portal/service-icon";
 import { Chip, PCard, PortalScreen, SectionTitle, StageTrack, pButton } from "@/components/portal/ui";
@@ -20,14 +21,35 @@ export default async function BusinessHome({ params }: { params: Promise<{ slug:
   const active = orders.filter((o) => !o.done).slice(0, 3);
   const first = customer.full_name.split(/\s+/)[0];
   const featured = business.services.slice(0, 4);
+  const supabase = await createClient();
+  const laundry = Boolean(business.laundry_ops);
+  const [{ count: unread }, extra] = await Promise.all([
+    supabase.from("customer_notifications").select("id", { count: "exact", head: true }).eq("customer_id", customer.id).is("read_at", null),
+    laundry ? Promise.all([
+      supabase.rpc("my_service_reminder", { p_tenant: business.id }),
+      supabase.from("customer_subscriptions").select("plan_id, status, current_period_end").eq("customer_id", customer.id).in("status", ["active", "pending_payment"]).limit(1).maybeSingle(),
+      supabase.from("customers").select("loyalty_points").eq("id", customer.id).single(),
+    ]) : null,
+  ]);
+  const reminder = extra?.[0].data as { predicted_next_at: string; due: boolean } | null | undefined;
+  const sub = extra?.[1].data;
+  const points = extra?.[2].data?.loyalty_points ?? 0;
+  const planName = sub ? business.plans?.find((p) => p.id === sub.plan_id)?.name : null;
+  const day = (v: string) => new Intl.DateTimeFormat("en-GB", { weekday: "long", day: "numeric", month: "short", timeZone: business.timezone }).format(new Date(v));
 
   return (
     <PortalScreen
       business={business}
       right={
-        <Link href={`/b/${slug}/support`} aria-label="Support chat" className="grid size-9 place-items-center rounded-full bg-white/14 hover:bg-white/22">
-          <MessageCircle className="size-[18px]" />
-        </Link>
+        <div className="flex gap-2">
+          <Link href={`/b/${slug}/notifications`} aria-label={`Notifications${unread ? `, ${unread} unread` : ""}`} className="relative grid size-9 place-items-center rounded-full bg-white/14 hover:bg-white/22">
+            <Bell className="size-[18px]" />
+            {(unread ?? 0) > 0 && <span className="absolute -end-0.5 -top-0.5 grid min-w-[18px] place-items-center rounded-full bg-[var(--p-accent)] px-1 text-[10px] font-bold text-[var(--p-on-accent)]">{unread! > 9 ? "9+" : unread}</span>}
+          </Link>
+          <Link href={`/b/${slug}/support`} aria-label="Support chat" className="grid size-9 place-items-center rounded-full bg-white/14 hover:bg-white/22">
+            <MessageCircle className="size-[18px]" />
+          </Link>
+        </div>
       }
       hero={
         <div className="pt-5">
@@ -38,6 +60,31 @@ export default async function BusinessHome({ params }: { params: Promise<{ slug:
         </div>
       }
     >
+      {laundry && (reminder || sub || (business.loyalty?.enabled && points > 0)) && (
+        <div className="mb-2 grid gap-3 sm:grid-cols-3">
+          {reminder && (
+            <Link href={`/b/${slug}/services`}><PCard className="flex h-full items-center gap-3 p-3.5 hover:border-[#D3DAE5]">
+              <CalendarClock className="size-5 shrink-0 text-[var(--p-secondary)]" />
+              <span className="min-w-0 text-[13px]"><span className="block font-semibold">{reminder.due ? "Time for your next laundry" : "Your next laundry"}</span>
+                <span className="text-[#6B7A90]">{reminder.due ? "Book a pickup today" : `Around ${day(reminder.predicted_next_at)}`}</span></span>
+            </PCard></Link>
+          )}
+          {sub && (
+            <Link href={`/b/${slug}/subscriptions`}><PCard className="flex h-full items-center gap-3 p-3.5 hover:border-[#D3DAE5]">
+              <Repeat className="size-5 shrink-0 text-[var(--p-secondary)]" />
+              <span className="min-w-0 text-[13px]"><span className="block font-semibold">{planName ?? "Your plan"}</span>
+                <span className="text-[#6B7A90]">{sub.status === "active" && sub.current_period_end ? `Renews ${day(sub.current_period_end)}` : "Awaiting payment"}</span></span>
+            </PCard></Link>
+          )}
+          {business.loyalty?.enabled && points > 0 && (
+            <Link href={`/b/${slug}/rewards`}><PCard className="flex h-full items-center gap-3 p-3.5 hover:border-[#D3DAE5]">
+              <Star className="size-5 shrink-0 text-[var(--p-accent)]" />
+              <span className="min-w-0 text-[13px]"><span className="block font-semibold">{points.toLocaleString()} points</span>
+                <span className="text-[#6B7A90]">Worth {formatMoney(points * business.loyalty.point_value, business.currency)}</span></span>
+            </PCard></Link>
+          )}
+        </div>
+      )}
       <div className="lg:grid lg:grid-cols-[1fr_340px] lg:gap-6">
         <div>
           <SectionTitle title="Our services" href={`/b/${slug}/services`} linkLabel="All services" />

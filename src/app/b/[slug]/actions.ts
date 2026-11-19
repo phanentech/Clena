@@ -45,6 +45,7 @@ export async function portalSignUp(slug: string, _: PState, fd: FormData): Promi
     phone: z.string().trim().max(30).optional(),
     email: z.email("Enter a valid email address"),
     password: z.string().min(8, "Use at least 8 characters for your password").regex(/[0-9]/, "Include a number in your password"),
+    ref: z.string().trim().max(20).regex(/^[A-Za-z0-9]*$/, "Check the referral code").optional(),
   }).safeParse(Object.fromEntries(fd));
   if (!p.success) return { error: p.error.issues[0].message };
   if (!business.portal.signup_enabled) return { error: `${business.name} isn't accepting new sign-ups. Ask them to add you.` };
@@ -54,7 +55,7 @@ export async function portalSignUp(slug: string, _: PState, fd: FormData): Promi
     email: p.data.email,
     password: p.data.password,
     options: {
-      data: { full_name: p.data.full_name, phone: p.data.phone ?? null, join_slug: slug, account_type: "customer" },
+      data: { full_name: p.data.full_name, phone: p.data.phone ?? null, join_slug: slug, account_type: "customer", ref: p.data.ref?.toUpperCase() || null },
       emailRedirectTo: `${await origin()}/auth/confirm?next=${encodeURIComponent(next)}`,
     },
   });
@@ -63,7 +64,7 @@ export async function portalSignUp(slug: string, _: PState, fd: FormData): Promi
     return { error: error.message };
   }
   if (!data.session) return { success: `We sent a link to ${p.data.email}. Open it to finish joining ${business.name}.` };
-  const { error: jErr } = await supabase.rpc("join_business", { p_slug: slug, p_full_name: p.data.full_name, p_phone: p.data.phone ?? null });
+  const { error: jErr } = await supabase.rpc("join_business", { p_slug: slug, p_full_name: p.data.full_name, p_phone: p.data.phone ?? null, p_ref: p.data.ref || null });
   if (jErr) return { error: jErr.message };
   redirect(`/b/${slug}`);
 }
@@ -83,12 +84,17 @@ const orderInput = z.object({
   items: z.array(z.object({ service_id: z.uuid(), quantity: z.number().positive().max(1000) })).min(1, "Your basket is empty").max(30),
   promo: z.string().trim().max(24).optional().nullable(),
   mode: z.enum(["pickup_delivery", "drop_off"]),
+  address: z.uuid().optional().nullable(),
+  express: z.boolean().optional(),
+  points: z.number().int().min(0).max(10_000_000).optional(),
 });
 
 export type Quote = {
   lines: { service_id: string; name: string; quantity: number; unit_price: number; line_total: number; pricing_model: string }[];
   subtotal: number; tax: number; delivery_fee: number; service_fee: number; discount: number; total: number;
   promo_code: string | null; promo_error: string | null; promo_title: string | null; below_minimum: boolean; min_order: number; currency: string;
+  express_fee?: number; subscription_discount?: number; subscription_kg?: number; subscription_name?: string | null;
+  points_used?: number; points_discount?: number; zone_name?: string | null; zone_error?: string | null; is_estimate?: boolean;
 };
 
 export async function quoteOrder(slug: string, input: unknown): Promise<{ quote?: Quote; error?: string }> {
@@ -98,6 +104,7 @@ export async function quoteOrder(slug: string, input: unknown): Promise<{ quote?
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("quote_my_order", {
     p_tenant: ctx.business.id, p_items: p.data.items, p_promo: p.data.promo || null, p_mode: p.data.mode,
+    p_address: p.data.address ?? null, p_express: p.data.express ?? false, p_points: p.data.points ?? 0,
   });
   if (error) return { error: msg(error) };
   return { quote: data as Quote };
@@ -111,6 +118,7 @@ export async function placeOrder(slug: string, input: unknown): Promise<{ id?: s
     pickup_local: z.string().optional().nullable(),
     delivery_local: z.string().optional().nullable(),
     notes: z.string().max(1000).optional().nullable(),
+    photos: z.array(z.string().max(700_000)).max(4).optional(),
   }).safeParse(input);
   if (!p.success) return { error: p.error.issues[0].message };
   const tz = ctx.business.timezone || "Africa/Lagos";
@@ -126,10 +134,17 @@ export async function placeOrder(slug: string, input: unknown): Promise<{ id?: s
     p_tenant: ctx.business.id, p_items: p.data.items, p_mode: p.data.mode,
     p_pickup_address: p.data.pickup_address ?? null, p_delivery_address: p.data.delivery_address ?? null,
     p_pickup_at: pickupAt, p_delivery_at: deliveryAt, p_promo: p.data.promo || null, p_notes: p.data.notes ?? null,
+    p_express: p.data.express ?? false, p_points: p.data.points ?? 0,
   });
   if (error) return { error: msg(error) };
+  const id = (data as { id: string }).id;
+  // optional photos the customer added (stains, special items)
+  const photos = (p.data.photos ?? []).filter((d) => /^data:image\/(jpeg|png|webp);base64,/.test(d));
+  if (photos.length) {
+    await supabase.from("ops_media").insert(photos.map((d) => ({ tenant_id: ctx.business.id, order_id: id, kind: "customer_photo", data_url: d, caption: "From customer", created_by: ctx.user.id })));
+  }
   revalidatePath(`/b/${slug}`, "layout");
-  return { id: (data as { id: string }).id };
+  return { id };
 }
 
 export async function cancelOrder(slug: string, orderId: string, _: PState, fd: FormData): Promise<PState> {
@@ -173,11 +188,12 @@ const addressSchema = z.object({
 
 export async function saveAddress(slug: string, _: PState, fd: FormData): Promise<PState & { id?: string }> {
   const ctx = await requireCustomer(slug);
-  const p = addressSchema.safeParse(Object.fromEntries(fd));
+  const p = addressSchema.extend({ zone_id: z.string().optional() }).safeParse(Object.fromEntries(fd));
   if (!p.success) return { error: p.error.issues[0].message };
   const supabase = await createClient();
-  const { id, is_default, ...fields } = p.data;
-  const row = { ...fields, line2: fields.line2 || null, city: fields.city || null, state: fields.state || null, landmark: fields.landmark || null, country: ctx.business.country };
+  const { id, is_default, zone_id, ...fields } = p.data;
+  if ((ctx.business.zones ?? []).length && !zone_id) return { error: "Choose your area" };
+  const row = { ...fields, line2: fields.line2 || null, city: fields.city || null, state: fields.state || null, landmark: fields.landmark || null, country: ctx.business.country, zone_id: zone_id || null };
   const makeDefault = is_default === "on";
   if (makeDefault) {
     await supabase.from("customer_addresses").update({ is_default: false }).eq("customer_id", ctx.customer.id);
@@ -220,4 +236,71 @@ export async function sendMessage(slug: string, _: PState, fd: FormData): Promis
   if (error) return { error: msg(error) };
   revalidatePath(`/b/${slug}/support`);
   return { success: "sent" };
+}
+
+// --- laundry: approvals, feedback, complaints, subscriptions, preferences ---
+
+export async function decideAdjustment(slug: string, adjustmentId: string, approve: boolean): Promise<PState> {
+  await requireCustomer(slug);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("decide_adjustment", { p_adj: adjustmentId, p_approve: approve });
+  if (error) return { error: msg(error) };
+  revalidatePath(`/b/${slug}`, "layout");
+  return { success: approve ? "Approved. Thanks!" : "Declined. We'll be in touch." };
+}
+
+export async function submitFeedback(slug: string, orderId: string, _: PState, fd: FormData): Promise<PState> {
+  await requireCustomer(slug);
+  const rating = Number(fd.get("rating"));
+  if (!(rating >= 1 && rating <= 5)) return { error: "Choose a rating" };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("submit_feedback", { p_order: orderId, p_rating: rating, p_comment: String(fd.get("comment") ?? "") || null });
+  if (error) return { error: msg(error) };
+  revalidatePath(`/b/${slug}/orders/${orderId}`);
+  return { success: "Thank you for the feedback" };
+}
+
+export async function reportIssue(slug: string, input: { orderId: string; kind: string; description: string; photos: string[] }): Promise<PState> {
+  await requireCustomer(slug);
+  if (input.description.trim().length < 3) return { error: "Tell us what happened" };
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("report_my_issue", { p_order: input.orderId, p_kind: input.kind, p_description: input.description, p_photos: input.photos.slice(0, 4) });
+  if (error) return { error: msg(error) };
+  revalidatePath(`/b/${slug}/orders/${input.orderId}`);
+  return { success: "Thanks for telling us. Our team will look into it and reply in Support." };
+}
+
+export async function subscribe(slug: string, planId: string): Promise<PState> {
+  const ctx = await requireCustomer(slug);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("subscribe_to_plan", { p_tenant: ctx.business.id, p_plan: planId });
+  if (error) return { error: msg(error) };
+  revalidatePath(`/b/${slug}/subscriptions`);
+  return { success: "Request sent. Pay the first period and we'll activate your plan." };
+}
+
+export async function cancelSubscription(slug: string, subId: string): Promise<PState> {
+  await requireCustomer(slug);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("cancel_my_subscription", { p_sub: subId });
+  if (error) return { error: msg(error) };
+  revalidatePath(`/b/${slug}/subscriptions`);
+  return { success: "Done. Your plan won't renew." };
+}
+
+export async function savePreferences(slug: string, _: PState, fd: FormData): Promise<PState> {
+  const ctx = await requireCustomer(slug);
+  const prefs = Object.fromEntries(["starch", "fragrance", "finish", "detergent", "preferred_time", "preferred_day", "other"].map((k) => [k, String(fd.get(k) ?? "")]));
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_my_preferences", { p_tenant: ctx.business.id, p_prefs: prefs });
+  if (error) return { error: msg(error) };
+  revalidatePath(`/b/${slug}/profile`);
+  return { success: "Preferences saved. We'll follow them on every order." };
+}
+
+export async function slotAvailability(slug: string): Promise<{ slot_start: string; booked: number; capacity: number }[]> {
+  const ctx = await requireCustomer(slug);
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("slot_availability", { p_tenant: ctx.business.id, p_days: 8 });
+  return (data ?? []) as { slot_start: string; booked: number; capacity: number }[];
 }
