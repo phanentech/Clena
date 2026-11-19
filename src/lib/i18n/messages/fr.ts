@@ -9,7 +9,7 @@ export const fr: Messages = {
   nav: {
     operations: "Opérations", customersGroup: "Clients", money: "Finances", business: "Entreprise",
     dashboard: "Tableau de bord", orders: "Commandes", bookings: "Réservations", customers: "Clients", payments: "Paiements", reports: "Rapports",
-    services: "Services et tarifs", team: "Équipe", settings: "Paramètres", support: "Aide et support", more: "Plus",
+    services: "Services et tarifs", team: "Équipe", settings: "Paramètres", support: "Aide et support", messages: "Messages", offers: "Offres", more: "Plus",
     searchPlaceholder: "Rechercher commandes, clients, numéros de téléphone", newOrder: "Nouvelle commande", newBooking: "Nouvelle réservation", addCustomer: "Ajouter un client",
     switchBusiness: "Changer d'entreprise", sampleLoaded: "Des données d'exemple sont chargées.", manage: "Gérer",
   },

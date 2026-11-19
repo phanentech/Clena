@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
-  BarChart3, CalendarDays, ChevronDown, ClipboardList, LayoutDashboard, LifeBuoy, LogOut, Menu, Plus, Search, Settings, Tags, UserCog, Users, Wallet,
+  BarChart3, CalendarDays, ChevronDown, ClipboardList, LayoutDashboard, LifeBuoy, LogOut, Menu, MessagesSquare, TicketPercent, Plus, Search, Settings, Tags, UserCog, Users, Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import type { NavGroup } from "./nav";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
-const ICONS: Record<string, LucideIcon> = { LayoutDashboard, ClipboardList, CalendarDays, Users, Wallet, BarChart3, Tags, UserCog, Settings, LifeBuoy };
+const ICONS: Record<string, LucideIcon> = { LayoutDashboard, ClipboardList, CalendarDays, Users, Wallet, BarChart3, Tags, UserCog, Settings, LifeBuoy, MessagesSquare, TicketPercent };
 
 type Props = {
   nav: NavGroup[];
@@ -87,16 +87,20 @@ export function AppShell({ nav, newActions, user, tenant, tenants, switchTenant,
 
       <div className="lg:ps-60">
         <header className="sticky top-0 z-20 flex h-14 items-center gap-3 border-b border-line bg-surface/95 px-4 backdrop-blur sm:px-6">
-          <Link href="/app/dashboard" className="flex items-center gap-2 lg:hidden" aria-label="Dashboard">
-            <LogoMark className="size-7" />
+          <Link href="/app/dashboard" className="flex min-w-0 shrink items-center gap-2 lg:hidden" aria-label="Dashboard">
+            <LogoMark className="size-7 shrink-0" />
+            <span className="truncate text-[14px] font-semibold sm:hidden">{tenant.name}</span>
           </Link>
-          <form action="/app/search" method="get" role="search" className="relative max-w-md flex-1">
+          <Link href="/app/search" aria-label={labels.search} className="ms-auto grid size-9 shrink-0 place-items-center rounded-lg border border-line text-muted sm:hidden">
+            <Search className="size-4" />
+          </Link>
+          <form action="/app/search" method="get" role="search" className="relative hidden max-w-md flex-1 sm:block">
             <Search className="pointer-events-none absolute start-2.5 top-1/2 size-4 -translate-y-1/2 text-faint" />
             <label htmlFor="global-search" className="sr-only">Search orders and customers</label>
             <input id="global-search" name="q" placeholder={labels.search}
               className="h-9 w-full rounded-lg border border-line bg-canvas ps-8 pe-3 text-[13px] placeholder:text-faint focus:border-navy-700 focus:bg-surface focus:outline-none" />
           </form>
-          <div className="ms-auto flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 sm:ms-auto">
             <LanguageSwitcher locale={locale} label={labels.language} className="hidden md:inline-flex" />
             {newActions.length > 0 && (
               <details ref={newRef} className="relative">

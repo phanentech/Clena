@@ -41,8 +41,8 @@ beforeAll(async () => {
   ids.branchA2 = (await db.as<{ id: string }>(u.ownerA, "insert into branches (tenant_id, name) values ($1, 'Ikeja') returning id", [t.A]))[0].id;
   ids.branchB = (await db.as<{ id: string }>(u.ownerB, "insert into branches (tenant_id, name) values ($1, 'VI') returning id", [t.B]))[0].id;
 
-  ids.custA1 = (await db.as<{ id: string }>(u.ownerA, "insert into customers (tenant_id, full_name, phone, user_id) values ($1, 'Ada One', '+2348000000001', $2) returning id", [t.A, u.custUser1]))[0].id;
-  ids.custA2 = (await db.as<{ id: string }>(u.ownerA, "insert into customers (tenant_id, full_name, phone, user_id) values ($1, 'Bayo Two', '+2348000000002', $2) returning id", [t.A, u.custUser2]))[0].id;
+  ids.custA1 = (await db.admin<{ id: string }>("insert into customers (tenant_id, full_name, phone, user_id) values ($1, 'Ada One', '+2348000000001', $2) returning id", [t.A, u.custUser1]))[0].id;
+  ids.custA2 = (await db.admin<{ id: string }>("insert into customers (tenant_id, full_name, phone, user_id) values ($1, 'Bayo Two', '+2348000000002', $2) returning id", [t.A, u.custUser2]))[0].id;
   ids.custB = (await db.as<{ id: string }>(u.ownerB, "insert into customers (tenant_id, full_name, phone) values ($1, 'Chidi Three', '+2348000000003') returning id", [t.B]))[0].id;
 
   ids.svcA = (await db.admin<{ id: string }>("select id from services where tenant_id = $1 and name = 'Wash & Fold'", [t.A]))[0].id;

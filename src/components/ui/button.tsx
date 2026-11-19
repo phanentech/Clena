@@ -17,10 +17,10 @@ export const buttonVariants = cva(
         navy: "bg-navy-900 text-white hover:bg-navy-800",
       },
       size: {
-        sm: "h-8 px-2.5",
-        md: "h-9 px-3.5",
+        sm: "h-9 px-3 sm:h-8 sm:px-2.5",
+        md: "h-10 px-4 sm:h-9 sm:px-3.5",
         lg: "h-11 px-5 text-sm",
-        icon: "size-9",
+        icon: "size-10 sm:size-9",
       },
     },
     defaultVariants: { variant: "primary", size: "md" },

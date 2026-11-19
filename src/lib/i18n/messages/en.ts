@@ -7,7 +7,7 @@ export const en = {
   nav: {
     operations: "Operations", customersGroup: "Customers", money: "Money", business: "Business",
     dashboard: "Dashboard", orders: "Orders", bookings: "Bookings", customers: "Customers", payments: "Payments", reports: "Reports",
-    services: "Services & prices", team: "Team", settings: "Settings", support: "Help & support", more: "More",
+    services: "Services & prices", team: "Team", settings: "Settings", support: "Help & support", messages: "Messages", offers: "Offers", more: "More",
     searchPlaceholder: "Search orders, customers, phone numbers", newOrder: "New order", newBooking: "New booking", addCustomer: "Add customer",
     switchBusiness: "Switch business", sampleLoaded: "Sample data is loaded.", manage: "Manage",
   },

@@ -9,7 +9,7 @@ export const sw: Messages = {
   nav: {
     operations: "Shughuli", customersGroup: "Wateja", money: "Fedha", business: "Biashara",
     dashboard: "Dashibodi", orders: "Oda", bookings: "Miadi", customers: "Wateja", payments: "Malipo", reports: "Ripoti",
-    services: "Huduma na bei", team: "Timu", settings: "Mipangilio", support: "Msaada", more: "Zaidi",
+    services: "Huduma na bei", team: "Timu", settings: "Mipangilio", support: "Msaada", messages: "Ujumbe", offers: "Ofa", more: "Zaidi",
     searchPlaceholder: "Tafuta oda, wateja, namba za simu", newOrder: "Oda mpya", newBooking: "Miadi mipya", addCustomer: "Ongeza mteja",
     switchBusiness: "Badilisha biashara", sampleLoaded: "Data ya mfano imepakiwa.", manage: "Simamia",
   },

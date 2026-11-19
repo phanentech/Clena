@@ -9,7 +9,7 @@ export const ar: Messages = {
   nav: {
     operations: "العمليات", customersGroup: "العملاء", money: "المالية", business: "النشاط التجاري",
     dashboard: "لوحة التحكم", orders: "الطلبات", bookings: "الحجوزات", customers: "العملاء", payments: "المدفوعات", reports: "التقارير",
-    services: "الخدمات والأسعار", team: "الفريق", settings: "الإعدادات", support: "المساعدة والدعم", more: "المزيد",
+    services: "الخدمات والأسعار", team: "الفريق", settings: "الإعدادات", support: "المساعدة والدعم", messages: "الرسائل", offers: "العروض", more: "المزيد",
     searchPlaceholder: "ابحث عن الطلبات أو العملاء أو أرقام الهواتف", newOrder: "طلب جديد", newBooking: "حجز جديد", addCustomer: "إضافة عميل",
     switchBusiness: "تبديل النشاط التجاري", sampleLoaded: "تم تحميل بيانات تجريبية.", manage: "إدارة",
   },

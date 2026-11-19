@@ -18,7 +18,11 @@ export const APP_NAV: NavGroup[] = [
   },
   {
     label: "Customers", key: "customersGroup",
-    items: [{ href: "/app/customers", label: "Customers", key: "customers", icon: "Users", permission: "customers.view", mobile: true }],
+    items: [
+      { href: "/app/customers", label: "Customers", key: "customers", icon: "Users", permission: "customers.view", mobile: true },
+      { href: "/app/messages", label: "Messages", key: "messages", icon: "MessagesSquare", permission: "customers.view" },
+      { href: "/app/offers", label: "Offers", key: "offers", icon: "TicketPercent", permission: "settings.manage" },
+    ],
   },
   {
     label: "Money", key: "money",

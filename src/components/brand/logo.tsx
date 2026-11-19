@@ -1,3 +1,4 @@
+import { useId } from "react";
 import { cn } from "@/lib/utils";
 
 /**
@@ -5,10 +6,12 @@ import { cn } from "@/lib/utils";
  * Replace with the final exported logo files in /public/brand when available.
  */
 export function LogoMark({ className }: { className?: string }) {
+  // unique per instance: a hidden copy (e.g. the desktop sidebar) must not own the gradient
+  const gid = `clena-g-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
   return (
     <svg viewBox="0 0 48 48" className={cn("size-8", className)} aria-hidden>
       <defs>
-        <linearGradient id="clena-g" x1="8" y1="4" x2="34" y2="46" gradientUnits="userSpaceOnUse">
+        <linearGradient id={gid} x1="8" y1="4" x2="34" y2="46" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#22CC92" />
           <stop offset="0.55" stopColor="#12B48E" />
           <stop offset="1" stopColor="#1E88A8" />
@@ -16,7 +19,7 @@ export function LogoMark({ className }: { className?: string }) {
       </defs>
       <path
         d="M34.5 9.6A19 19 0 1 0 34.5 38.4a4.6 4.6 0 0 0-5.7-7.2 10 10 0 1 1 0-14.4 4.6 4.6 0 0 0 5.7-7.2Z"
-        fill="url(#clena-g)"
+        fill={`url(#${gid})`}
       />
       <path d="M37 17.5c.6 3.6 1.9 4.9 5.5 5.5-3.6.6-4.9 1.9-5.5 5.5-.6-3.6-1.9-4.9-5.5-5.5 3.6-.6 4.9-1.9 5.5-5.5Z" fill="#22CC92" />
     </svg>

@@ -2,12 +2,13 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { StackTable } from "./stack-table";
 
 const fieldBase =
   "w-full rounded-lg border border-line-strong bg-surface px-3 text-[13px] text-ink placeholder:text-faint transition-colors focus:border-navy-700 focus:outline-none focus:ring-3 focus:ring-navy-900/8 disabled:opacity-60 aria-invalid:border-danger-600";
 
 export function Input({ className, ...props }: React.ComponentProps<"input">) {
-  return <input className={cn(fieldBase, "h-9", className)} {...props} />;
+  return <input className={cn(fieldBase, "h-10 sm:h-9", className)} {...props} />;
 }
 
 export function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
@@ -17,7 +18,7 @@ export function Textarea({ className, ...props }: React.ComponentProps<"textarea
 export function Select({ className, ...props }: React.ComponentProps<"select">) {
   return (
     <select
-      className={cn(fieldBase, "h-9 appearance-none bg-[length:14px] bg-[right_0.6rem_center] bg-no-repeat pr-8", className)}
+      className={cn(fieldBase, "h-10 sm:h-9 appearance-none bg-[length:14px] bg-[right_0.6rem_center] bg-no-repeat pr-8", className)}
       style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B6B80' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")" }}
       {...props}
     />
@@ -132,10 +133,12 @@ export function PageHeader({ title, description, actions, back }: { title: React
   );
 }
 
-export function Table({ className, ...props }: React.ComponentProps<"table">) {
+/** On phones rows become cards; pass stack={false} for small grids that should keep columns. */
+export function Table({ className, stack = true, ...props }: React.ComponentProps<"table"> & { stack?: boolean }) {
+  const cls = cn("w-full text-left text-[13px] [&_tbody_tr:last-child>td]:border-b-0", stack && "tbl-stack", className);
   return (
     <div className="overflow-x-auto">
-      <table className={cn("w-full text-left text-[13px] [&_tbody_tr:last-child>td]:border-b-0", className)} {...props} />
+      {stack ? <StackTable className={cls} {...props} /> : <table className={cls} {...props} />}
     </div>
   );
 }
