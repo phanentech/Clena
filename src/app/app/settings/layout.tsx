@@ -1,13 +1,16 @@
 import { PageHeader } from "@/components/ui/primitives";
 import { requireTenant } from "@/lib/auth/session";
+import { hasLaundryOps } from "@/lib/ops";
 import { SettingsNav } from "./nav";
 
 export default async function SettingsLayout({ children }: { children: React.ReactNode }) {
   const { membership } = await requireTenant();
   const has = (p: string) => membership.permissions.includes(p as never);
+  const laundry = await hasLaundryOps(membership.tenantId);
   const items = [
     { href: "/app/settings", label: "General", show: has("settings.manage") },
     { href: "/app/settings/customer-app", label: "Customer app", show: has("settings.manage") },
+    { href: "/app/settings/operations", label: "Operations", show: laundry && has("settings.manage") },
     { href: "/app/settings/branding", label: "Branding", show: has("settings.manage") },
     { href: "/app/settings/branches", label: "Branches", show: has("branches.manage") },
     { href: "/app/settings/workflow", label: "Order workflow", show: has("workflows.manage") },

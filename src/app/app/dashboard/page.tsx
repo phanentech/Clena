@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { DailyBars } from "@/components/app/charts";
 import { StageBoard } from "@/components/app/stage-board";
+import { OpsToday } from "@/components/ops/ops-today";
+import { hasLaundryOps, queueCounts } from "@/lib/ops";
 import { createClient } from "@/lib/supabase/server";
 import { can, requireTenant } from "@/lib/auth/session";
 import { cn, formatMoney, nowMs } from "@/lib/utils";
@@ -92,6 +94,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   const rangeHref = (r: string) => `?range=${r}${branch ? `&branch=${branch}` : ""}`;
 
+  const opsCounts = (await hasLaundryOps(membership.tenantId)) && can(membership, "orders.view") ? await queueCounts(membership.tenantId) : null;
   return (
     <>
       <PageHeader
@@ -119,6 +122,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </>
         }
       />
+      {opsCounts && <OpsToday counts={opsCounts} />}
 
       {noData && (
         <Card className="mb-5">

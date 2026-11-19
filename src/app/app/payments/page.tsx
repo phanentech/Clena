@@ -4,7 +4,9 @@ import { Badge, Card, EmptyState, OrderTag, PageHeader, Select, Table, Td, Th } 
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/app/pagination";
 import { createClient } from "@/lib/supabase/server";
-import { requireTenant } from "@/lib/auth/session";
+import { can, requireTenant } from "@/lib/auth/session";
+import { RefundButton } from "@/components/ops/refund-button";
+import { hasLaundryOps } from "@/lib/ops";
 import { formatDateTime, formatMoney, nowMs } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Payments" };
@@ -42,6 +44,11 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
   const byMethod = new Map<string, number>();
   (all ?? []).forEach((p) => byMethod.set(p.method, (byMethod.get(p.method) ?? 0) + Number(p.amount)));
   const owed = (outstanding ?? []).reduce((s, o) => s + Number(o.total) - Number(o.amount_paid), 0);
+  const canRefund = can(membership, "payments.record") && (await hasLaundryOps(membership.tenantId));
+  const ids = (payments ?? []).map((p) => p.id);
+  const { data: refundRows } = canRefund && ids.length ? await supabase.from("refunds").select("payment_id, amount").in("payment_id", ids) : { data: [] };
+  const refunded = new Map<string, number>();
+  (refundRows ?? []).forEach((r) => refunded.set(r.payment_id, (refunded.get(r.payment_id) ?? 0) + Number(r.amount)));
 
   return (
     <>
@@ -81,7 +88,7 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
           <EmptyState icon={<Wallet />} title="No payments in this period" description="Record cash, transfer or POS payments from an order's page." />
         ) : (
           <Table>
-            <thead><tr><Th>Date</Th><Th>Customer</Th><Th className="hidden md:table-cell">Order</Th><Th className="hidden sm:table-cell">Method</Th><Th className="hidden lg:table-cell">Reference</Th><Th className="text-right">Amount</Th></tr></thead>
+            <thead><tr><Th>Date</Th><Th>Customer</Th><Th className="hidden md:table-cell">Order</Th><Th className="hidden sm:table-cell">Method</Th><Th className="hidden lg:table-cell">Reference</Th><Th className="text-right">Amount</Th>{canRefund && <Th />}</tr></thead>
             <tbody>
               {payments.map((p) => {
                 const o = one(p.orders as One<{ id: string; order_number: string }>);
@@ -95,7 +102,9 @@ export default async function PaymentsPage({ searchParams }: { searchParams: Pro
                     <Td className="text-right">
                       <span className="font-semibold tnum">{formatMoney(p.amount, p.currency)}</span>
                       {p.status !== "successful" && <Badge tone={p.status === "failed" ? "danger" : "warning"} className="ml-2">{p.status}</Badge>}
+                      {(refunded.get(p.id) ?? 0) > 0 && <p className="text-xs text-muted">−{formatMoney(refunded.get(p.id)!, p.currency)} refunded</p>}
                     </Td>
+                    {canRefund && <Td className="text-right">{p.status === "successful" && <RefundButton paymentId={p.id} max={Number(p.amount) - (refunded.get(p.id) ?? 0)} />}</Td>}
                   </tr>
                 );
               })}

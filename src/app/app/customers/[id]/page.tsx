@@ -8,6 +8,12 @@ import { createClient } from "@/lib/supabase/server";
 import { can, requireTenant } from "@/lib/auth/session";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/utils";
 import { NoteForm } from "./note-form";
+import { hasLaundryOps } from "@/lib/ops";
+import { SEGMENT_LABEL } from "@/lib/ops-shared";
+import { ActionForm } from "@/components/ui/action-form";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { Input } from "@/components/ui/primitives";
+import { adjustPoints } from "../../ops-actions";
 
 export const metadata: Metadata = { title: "Customer" };
 
@@ -35,6 +41,17 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
     supabase.from("tenants").select("currency").eq("id", membership.tenantId).single(),
   ]);
   const currency = tenant?.currency ?? "NGN";
+  const laundry = await hasLaundryOps(membership.tenantId);
+  const [{ data: ins }, { data: subs }, { data: fb }] = laundry ? await Promise.all([
+    supabase.rpc("customer_insights", { p_tenant: membership.tenantId, p_customer: id }),
+    supabase.from("customer_subscriptions").select("status, current_period_end, subscription_plans(name)").eq("customer_id", id).in("status", ["active", "pending_payment"]).limit(1),
+    supabase.from("order_feedback").select("rating").eq("customer_id", id),
+  ]) : [{ data: null }, { data: null }, { data: null }];
+  const insight = (ins as { segment: string; reason: string; predicted_next_at: string | null; avg_interval_days: number | null; avg_order_value: number | null; preferred_dow: number | null }[] | null)?.[0];
+  const sub = subs?.[0];
+  const avgRating = fb?.length ? (fb.reduce((a, f) => a + f.rating, 0) / fb.length).toFixed(1) : null;
+  const prefs = Object.entries((customer.preferences ?? {}) as Record<string, unknown>).filter(([k, v]) => v && k !== "payment_method");
+  const DOW = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const lifetime = (orders ?? []).reduce((s, o) => s + Number(o.total), 0);
   const lastOrder = orders?.[0]?.created_at;
 
@@ -78,6 +95,33 @@ export default async function CustomerPage({ params }: { params: Promise<{ id: s
             <div className="p-5"><p className="text-xs text-muted">Lifetime value</p><p className="mt-1 text-xl font-bold">{canOrders ? formatMoney(lifetime, currency) : "—"}</p></div>
             <div className="col-span-2 border-t border-line p-5"><p className="text-xs text-muted">Last order</p><p className="mt-1 text-sm font-semibold">{formatDate(lastOrder)}</p></div>
           </Card>
+          {laundry && (
+            <Card className="p-5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-sm font-semibold">Customer insight</p>
+                {insight && <Badge tone={insight.segment === "at_risk" || insight.segment === "lapsed" ? "warning" : insight.segment === "vip" ? "success" : "info"}>{SEGMENT_LABEL[insight.segment] ?? insight.segment}</Badge>}
+              </div>
+              <dl className="mt-3 grid gap-2 text-sm">
+                {insight?.reason && <p className="text-muted">{insight.reason}</p>}
+                {insight?.avg_interval_days && <div className="flex justify-between"><dt className="text-muted">Orders every</dt><dd>{Math.round(Number(insight.avg_interval_days))} days</dd></div>}
+                {insight?.predicted_next_at && <div className="flex justify-between"><dt className="text-muted">Next expected</dt><dd>{formatDate(insight.predicted_next_at)}</dd></div>}
+                {insight?.preferred_dow !== null && insight?.preferred_dow !== undefined && <div className="flex justify-between"><dt className="text-muted">Usual day</dt><dd>{DOW[insight.preferred_dow]}</dd></div>}
+                {insight?.avg_order_value && <div className="flex justify-between"><dt className="text-muted">Average order</dt><dd>{formatMoney(Number(insight.avg_order_value), currency)}</dd></div>}
+                <div className="flex justify-between"><dt className="text-muted">Points</dt><dd className="tnum">{customer.loyalty_points ?? 0}</dd></div>
+                {customer.referral_code && <div className="flex justify-between"><dt className="text-muted">Referral code</dt><dd className="font-medium tnum">{customer.referral_code}</dd></div>}
+                {avgRating && <div className="flex justify-between"><dt className="text-muted">Average rating</dt><dd>{avgRating} / 5 ({fb!.length})</dd></div>}
+                {sub && <div className="flex justify-between"><dt className="text-muted">Plan</dt><dd>{(sub.subscription_plans as unknown as { name: string } | null)?.name} · {sub.status === "active" ? `to ${formatDate(sub.current_period_end)}` : "awaiting payment"}</dd></div>}
+              </dl>
+              {prefs.length > 0 && <div className="mt-3 flex flex-wrap gap-1">{prefs.map(([k, v]) => <Badge key={k}>{k.replaceAll("_", " ")}: {String(v)}</Badge>)}</div>}
+              {can(membership, "marketing.manage") && (
+                <ActionForm action={adjustPoints.bind(null, id)} compact className="mt-4 flex gap-2" resetOnSuccess>
+                  <Input name="points" type="number" placeholder="± points" aria-label="Points" className="h-9 w-24" />
+                  <Input name="note" placeholder="Reason" aria-label="Reason" className="h-9 flex-1" />
+                  <SubmitButton size="sm" variant="outline">Apply</SubmitButton>
+                </ActionForm>
+              )}
+            </Card>
+          )}
           {customer.notes && <Card className="p-5"><p className="text-xs font-medium text-muted">Profile notes</p><p className="mt-2 whitespace-pre-wrap text-sm">{customer.notes}</p></Card>}
         </div>
 

@@ -1,3 +1,5 @@
+import { KpiReport, type Kpis } from "@/components/ops/kpi-report";
+import { hasLaundryOps } from "@/lib/ops";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Card, CardHeader, PageHeader, Table, Td, Th } from "@/components/ui/primitives";
@@ -34,6 +36,8 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
   ]);
   if (error) throw new Error(error.message);
   const r = data as Report;
+  const laundry = await hasLaundryOps(membership.tenantId);
+  const kpis = laundry ? (await supabase.rpc("ops_kpis", { p_tenant: membership.tenantId, p_from: from.toISOString(), p_to: to.toISOString() })).data as Kpis | null : null;
   const cur = tenant?.currency ?? "NGN";
   const money = can(membership, "payments.view");
   const collectionRate = r.sales ? Math.round(((r.collected ?? 0) / r.sales) * 100) : null;
@@ -113,6 +117,12 @@ export default async function ReportsPage({ searchParams }: { searchParams: Prom
           )}
         </div>
       </div>
+      {kpis && (
+        <section className="mt-6">
+          <h2 className="mb-3 text-[15px] font-semibold">Operations scorecard</h2>
+          <KpiReport k={kpis} currency={cur} showMoney={money} />
+        </section>
+      )}
     </>
   );
 }

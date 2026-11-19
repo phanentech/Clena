@@ -7,6 +7,7 @@ import { Pagination } from "@/components/app/pagination";
 import { createClient } from "@/lib/supabase/server";
 import { can, requireTenant } from "@/lib/auth/session";
 import { formatDate } from "@/lib/utils";
+import { hasLaundryOps } from "@/lib/ops";
 
 export const metadata: Metadata = { title: "Customers" };
 const PAGE_SIZE = 25;
@@ -32,7 +33,10 @@ export default async function CustomersPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader title="Customers" description={`${count ?? 0} customer${count === 1 ? "" : "s"}`}
-        actions={can(membership, "customers.manage") && <Button asChild><Link href="/app/customers/new"><Plus />Add customer</Link></Button>} />
+        actions={<>
+          {(await hasLaundryOps(membership.tenantId)) && <Button asChild variant="outline"><Link href="/app/customers/insights">Insights</Link></Button>}
+          {can(membership, "customers.manage") && <Button asChild><Link href="/app/customers/new"><Plus />Add customer</Link></Button>}
+        </>} />
       <Card>
         <form className="flex gap-2 border-b border-line p-3" method="get">
           <div className="relative flex-1">

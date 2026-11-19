@@ -9,6 +9,7 @@ import { requirePlatform } from "@/lib/auth/session";
 import { formatDate, formatDateTime, formatMoney } from "@/lib/utils";
 import { extendTrial } from "../../actions";
 import { StatusForm } from "./status-form";
+import { setTenantModule } from "../../actions";
 
 export const metadata: Metadata = { title: "Organization" };
 const STATUS_TONE: Record<string, Tone> = { active: "success", trial: "info", past_due: "warning", suspended: "danger", cancelled: "neutral" };
@@ -28,6 +29,7 @@ export default async function OrganizationPage({ params }: { params: Promise<{ i
     supabase.from("email_outbox").select("to_email, subject, status, error, created_at").eq("tenant_id", id).order("created_at", { ascending: false }).limit(5),
     supabase.rpc("platform_list_tenants", { p_search: t.slug, p_status: null, p_limit: 1, p_offset: 0 }),
   ]);
+  const { data: mod } = await supabase.from("tenant_modules").select("module_key, enabled_at").eq("tenant_id", id).eq("module_key", "laundry_ops").maybeSingle();
   const reasonLabel = new Map((reasons ?? []).map((r) => [r.key, r.label]));
   const owner = owners?.[0] as { owner_email: string | null; members: number; orders_30d: number } | undefined;
   const canManage = access.permissions.includes("tenants.manage");
@@ -107,6 +109,15 @@ export default async function OrganizationPage({ params }: { params: Promise<{ i
             <Card>
               <CardHeader title="Change status" />
               <div className="p-4"><StatusForm tenantId={t.id} current={t.status} reasons={reasons ?? []} /></div>
+            </Card>
+            <Card>
+              <CardHeader title="Laundry operations module" description="Staff floor app, driver app, dispatch, quality control, partners, subscriptions and loyalty." />
+              <ActionForm action={setTenantModule} className="grid gap-3 p-4 pt-0">
+                <input type="hidden" name="tenantId" value={t.id} />
+                <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" name="enabled" defaultChecked={Boolean(mod)} className="size-4 accent-brand-600" />Switched on{mod ? "" : " (currently off)"}</label>
+                <p className="text-xs text-muted">Turning it on adds roles and renames order stages without losing history. Turning it off hides the screens and keeps all data.</p>
+                <SubmitButton variant="outline">Save</SubmitButton>
+              </ActionForm>
             </Card>
             <Card>
               <CardHeader title="Extend trial or subscription" />

@@ -322,3 +322,15 @@ export async function setUserPlatformRole(_: FormState, f: FormData): Promise<Fo
     return ok("Access updated.");
   }) as Promise<FormState>;
 }
+
+// ---------------------------------------------------------------- Modules
+export async function setTenantModule(_: FormState, f: FormData): Promise<FormState> {
+  return guarded("tenants.manage", async (db) => {
+    const enabled = f.get("enabled") === "on";
+    const tenant = z.uuid().parse(str(f, "tenantId"));
+    const { error } = await db.rpc("platform_set_module", { p_tenant: tenant, p_module: "laundry_ops", p_enabled: enabled });
+    if (error) return fail(error.message);
+    revalidatePath(`/platform/organizations/${tenant}`);
+    return ok(enabled ? "Laundry operations switched on. Roles, stages, areas and plans were set up; existing orders were kept." : "Laundry operations switched off. Data is kept and returns if you switch it back on.");
+  }) as Promise<FormState>;
+}

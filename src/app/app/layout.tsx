@@ -3,6 +3,7 @@ import { AppShell } from "@/components/app/shell";
 import { APP_NAV, NEW_ACTIONS } from "@/components/app/nav";
 import { getMemberships, requireTenant } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { hasLaundryOps } from "@/lib/ops";
 import { signOut } from "@/app/auth/actions";
 import { switchTenant } from "./actions";
 import { getLocale, getMessages } from "@/lib/i18n/server";
@@ -15,10 +16,10 @@ export default async function BusinessAppLayout({ children }: { children: React.
   const supabase = await createClient();
   const { data: tenant } = await supabase.from("tenants").select("settings").eq("id", membership.tenantId).single();
   const has = (p: string) => membership.permissions.includes(p as never);
-  const [t, locale] = await Promise.all([getMessages(), getLocale()]);
+  const [t, locale, laundry] = await Promise.all([getMessages(), getLocale(), hasLaundryOps(membership.tenantId)]);
   const navT = t.nav as Record<string, string>;
 
-  const nav = APP_NAV.map((g) => ({ ...g, label: navT[g.key ?? ""] ?? g.label, items: g.items.filter((i) => has(i.permission)).map((i) => ({ ...i, label: navT[i.key ?? ""] ?? i.label })) })).filter((g) => g.items.length > 0);
+  const nav = APP_NAV.map((g) => ({ ...g, label: navT[g.key ?? ""] ?? g.label, items: g.items.filter((i) => has(i.permission) && (!i.module || laundry)).map((i) => ({ ...i, label: navT[i.key ?? ""] ?? i.label })) })).filter((g) => g.items.length > 0);
   const newActions = NEW_ACTIONS.filter((a) => has(a.permission)).map(({ href, label, key }) => ({ href, label: navT[key] ?? label }));
 
   return (
