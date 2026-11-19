@@ -1,0 +1,61 @@
+import type { Messages } from "./en";
+
+export const es: Messages = {
+  common: {
+    save: "Guardar", cancel: "Cancelar", continue: "Continuar", back: "Atrás", signIn: "Iniciar sesión", signOut: "Cerrar sesión", getStarted: "Empezar",
+    startTrial: "Prueba gratis", bookDemo: "Reservar una demo", search: "Buscar", new: "Nuevo", language: "Idioma", skip: "Omitir por ahora", allOrders: "Todos los pedidos",
+    trialNote: "Prueba gratis de 14 días. Sin tarjeta.",
+  },
+  nav: {
+    operations: "Operaciones", customersGroup: "Clientes", money: "Finanzas", business: "Negocio",
+    dashboard: "Panel", orders: "Pedidos", bookings: "Reservas", customers: "Clientes", payments: "Pagos", reports: "Informes",
+    services: "Servicios y precios", team: "Equipo", settings: "Ajustes", support: "Ayuda y soporte", more: "Más",
+    searchPlaceholder: "Buscar pedidos, clientes, números de teléfono", newOrder: "Nuevo pedido", newBooking: "Nueva reserva", addCustomer: "Añadir cliente",
+    switchBusiness: "Cambiar de negocio", sampleLoaded: "Hay datos de ejemplo cargados.", manage: "Gestionar",
+  },
+  marketing: {
+    features: "Funciones", industries: "Sectores", pricing: "Precios", contact: "Contacto",
+    eyebrow: "El sistema operativo para negocios de servicios",
+    heroA: "Impulsando", heroHighlight: "negocios de servicios", heroB: "en África y más allá.",
+    heroBody: "Clena reúne pedidos, reservas, personal, pagos, logística y comunicación con clientes en un solo lugar, para que dirijas tu negocio en vez de perseguirlo.",
+    featuresKicker: "Todo en un solo lugar", featuresTitle: "Hecho para cómo trabajan de verdad los negocios de servicios.",
+    industriesTitle: "Una plataforma. Muchos negocios de servicios.",
+    industriesBody: "Elige tu sector y Clena configura el flujo de trabajo, los servicios y el vocabulario que necesitas. Puedes cambiarlo todo.",
+    seeHow: "Mira cómo funciona",
+    ctaTitle: "¿Listo para dirigir tu negocio de servicios?", ctaBody: "Listo en minutos. Tu primer flujo de trabajo y tus servicios se crean por ti.",
+    footerTagline: "El sistema operativo para negocios de servicios. Hecho para África. Pensado para el mundo.",
+    product: "Producto", company: "Empresa", createAccount: "Crear cuenta", rights: "Todos los derechos reservados.",
+  },
+  auth: {
+    panelTitle: "Una plataforma para cada pedido, reserva, miembro del equipo y pago.",
+    point1: "Flujos de trabajo configurables para tu sector", point2: "Portal de clientes y apps para personal y repartidores", point3: "Paystack, Flutterwave y pagos sin conexión",
+    panelFooter: "Hecho para África. Pensado para el mundo.",
+    welcomeBack: "Hola de nuevo", signInSubtitle: "Inicia sesión en tu cuenta de Clena.", email: "Correo electrónico", password: "Contraseña", forgot: "¿Olvidaste tu contraseña?",
+    newHere: "¿Nuevo en Clena?", createBusinessAccount: "Crear una cuenta de negocio",
+    registerTitle: "Empieza a gestionar tu negocio con Clena", registerSubtitle: "Prueba gratis de 14 días. Sin tarjeta.",
+    fullName: "Nombre completo", passwordHint: "Al menos 8 caracteres, con una letra y un número.", createAccount: "Crear cuenta",
+    haveAccount: "¿Ya tienes una cuenta?", terms: "Al continuar aceptas los términos y la política de privacidad de Clena.",
+    resetTitle: "Restablecer tu contraseña", resetSubtitle: "Te enviaremos un enlace seguro para elegir una nueva contraseña.", sendReset: "Enviar enlace", backToSignIn: "Volver a iniciar sesión",
+  },
+  dashboard: {
+    morning: "Buenos días", afternoon: "Buenas tardes", evening: "Buenas noches",
+    collected: "Cobrado", orders: "Pedidos", averageOrder: "Pedido medio", newCustomers: "Clientes nuevos", activeOrders: "Pedidos activos", overdue: "Atrasados",
+    outstanding: "pendiente", vsPrevious: "vs período anterior", workInProgress: "Trabajo en curso", moneyCollected: "Dinero cobrado", ordersReceived: "Pedidos recibidos",
+    byDay: "por día", needsAttention: "Requiere atención", nothing: "Nada requiere atención ahora mismo.", latestOrders: "Últimos pedidos",
+    todaysBookings: "Reservas de hoy", topServices: "Servicios principales", lastDays: "Últimos {n} días", calendar: "Calendario", loadSample: "Cargar datos de ejemplo",
+  },
+  onboarding: {
+    stepOf: "Paso {n} de {total}", finishLater: "Terminar más tarde", createBusiness: "Crear negocio", saved: "Tus respuestas se guardan en cada paso.",
+    steps: {
+      business: ["Tu negocio", "Cuéntanos quién eres. Configuraremos un flujo de trabajo, roles y servicios iniciales para tu sector."],
+      about: ["Cómo trabajas", "Unas preguntas para que Clena se adapte a tu forma de trabajar. Puedes cambiarlas después."],
+      location: ["Primera sucursal", "Dónde te encuentran tus clientes y tu horario. Las reservas y plazos usan este horario."],
+      services: ["Servicios y precios", "Añadimos servicios típicos de tu sector. Pon tus precios, desactiva lo que no ofreces y añade el resto."],
+      payments: ["Pagos", "Elige cómo pueden pagar tus clientes. Tus datos bancarios aparecen en las facturas para pagos por transferencia."],
+      notifications: ["Avisos a clientes", "Los clientes que lo acepten reciben avisos automáticos en estos momentos."],
+      branding: ["Marca", "Cómo aparece tu negocio en recibos, facturas y el portal de clientes."],
+      team: ["Tu equipo", "Invita a quienes trabajan contigo. Se unen al negocio al registrarse con el mismo correo."],
+      finish: ["Todo listo", "Todo está preparado. Elige cómo quieres empezar."],
+    },
+  },
+};

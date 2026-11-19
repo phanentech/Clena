@@ -1,0 +1,61 @@
+import type { Messages } from "./en";
+
+export const fr: Messages = {
+  common: {
+    save: "Enregistrer", cancel: "Annuler", continue: "Continuer", back: "Retour", signIn: "Se connecter", signOut: "Se déconnecter", getStarted: "Commencer",
+    startTrial: "Essai gratuit", bookDemo: "Réserver une démo", search: "Rechercher", new: "Nouveau", language: "Langue", skip: "Passer pour l'instant", allOrders: "Toutes les commandes",
+    trialNote: "Essai gratuit de 14 jours. Sans carte bancaire.",
+  },
+  nav: {
+    operations: "Opérations", customersGroup: "Clients", money: "Finances", business: "Entreprise",
+    dashboard: "Tableau de bord", orders: "Commandes", bookings: "Réservations", customers: "Clients", payments: "Paiements", reports: "Rapports",
+    services: "Services et tarifs", team: "Équipe", settings: "Paramètres", support: "Aide et support", more: "Plus",
+    searchPlaceholder: "Rechercher commandes, clients, numéros de téléphone", newOrder: "Nouvelle commande", newBooking: "Nouvelle réservation", addCustomer: "Ajouter un client",
+    switchBusiness: "Changer d'entreprise", sampleLoaded: "Des données d'exemple sont chargées.", manage: "Gérer",
+  },
+  marketing: {
+    features: "Fonctionnalités", industries: "Secteurs", pricing: "Tarifs", contact: "Contact",
+    eyebrow: "Le système d'exploitation des entreprises de services",
+    heroA: "Au service des", heroHighlight: "entreprises de services", heroB: "en Afrique et au-delà.",
+    heroBody: "Clena réunit commandes, réservations, équipes, paiements, logistique et communication client au même endroit, pour que vous dirigiez votre entreprise au lieu de courir après.",
+    featuresKicker: "Tout au même endroit", featuresTitle: "Conçu pour la réalité des entreprises de services.",
+    industriesTitle: "Une plateforme. De nombreux métiers.",
+    industriesBody: "Choisissez votre secteur : Clena configure le flux de travail, les services et le vocabulaire dont vous avez besoin, et vous pouvez tout modifier.",
+    seeHow: "Voir comment ça marche",
+    ctaTitle: "Prêt à mieux gérer votre entreprise de services ?", ctaBody: "Opérationnel en quelques minutes. Votre premier flux de travail et vos services sont créés pour vous.",
+    footerTagline: "Le système d'exploitation des entreprises de services. Conçu pour l'Afrique. Pensé pour le monde.",
+    product: "Produit", company: "Entreprise", createAccount: "Créer un compte", rights: "Tous droits réservés.",
+  },
+  auth: {
+    panelTitle: "Une seule plateforme pour chaque commande, réservation, membre de l'équipe et paiement.",
+    point1: "Flux de travail adaptés à votre secteur", point2: "Portail client, applications équipe et livreurs", point3: "Paystack, Flutterwave et paiements hors ligne",
+    panelFooter: "Conçu pour l'Afrique. Pensé pour le monde.",
+    welcomeBack: "Bon retour", signInSubtitle: "Connectez-vous à votre compte Clena.", email: "E-mail", password: "Mot de passe", forgot: "Mot de passe oublié ?",
+    newHere: "Nouveau sur Clena ?", createBusinessAccount: "Créer un compte entreprise",
+    registerTitle: "Gérez votre entreprise avec Clena", registerSubtitle: "Essai gratuit de 14 jours. Sans carte bancaire.",
+    fullName: "Nom complet", passwordHint: "Au moins 8 caractères, avec une lettre et un chiffre.", createAccount: "Créer le compte",
+    haveAccount: "Vous avez déjà un compte ?", terms: "En continuant, vous acceptez les conditions et la politique de confidentialité de Clena.",
+    resetTitle: "Réinitialiser votre mot de passe", resetSubtitle: "Nous vous enverrons un lien sécurisé pour choisir un nouveau mot de passe.", sendReset: "Envoyer le lien", backToSignIn: "Retour à la connexion",
+  },
+  dashboard: {
+    morning: "Bonjour", afternoon: "Bon après-midi", evening: "Bonsoir",
+    collected: "Encaissé", orders: "Commandes", averageOrder: "Panier moyen", newCustomers: "Nouveaux clients", activeOrders: "Commandes en cours", overdue: "En retard",
+    outstanding: "à encaisser", vsPrevious: "vs période précédente", workInProgress: "Travail en cours", moneyCollected: "Montants encaissés", ordersReceived: "Commandes reçues",
+    byDay: "par jour", needsAttention: "À traiter", nothing: "Rien à traiter pour le moment.", latestOrders: "Dernières commandes",
+    todaysBookings: "Réservations du jour", topServices: "Meilleurs services", lastDays: "{n} derniers jours", calendar: "Calendrier", loadSample: "Charger des données d'exemple",
+  },
+  onboarding: {
+    stepOf: "Étape {n} sur {total}", finishLater: "Terminer plus tard", createBusiness: "Créer l'entreprise", saved: "Vos réponses sont enregistrées à chaque étape.",
+    steps: {
+      business: ["Votre entreprise", "Présentez-vous. Nous configurerons un flux de travail, des rôles et des services de départ pour votre secteur."],
+      about: ["Votre fonctionnement", "Quelques questions pour que Clena s'adapte à votre façon de travailler. Modifiable plus tard."],
+      location: ["Première agence", "Où vos clients vous trouvent et vos horaires d'ouverture. Les réservations et échéances s'en servent."],
+      services: ["Services et tarifs", "Nous avons ajouté des services courants pour votre secteur. Fixez vos prix, désactivez ce que vous ne proposez pas et ajoutez le reste."],
+      payments: ["Paiements", "Choisissez comment vos clients paient. Vos coordonnées bancaires figurent sur les factures pour les virements."],
+      notifications: ["Messages clients", "Les clients qui l'acceptent sont informés automatiquement à ces moments-là."],
+      branding: ["Image de marque", "L'apparence de votre entreprise sur les reçus, factures et le portail client."],
+      team: ["Votre équipe", "Invitez vos collaborateurs. Ils rejoignent l'entreprise en s'inscrivant avec la même adresse e-mail."],
+      finish: ["C'est prêt", "Tout est en place. Choisissez comment commencer."],
+    },
+  },
+};

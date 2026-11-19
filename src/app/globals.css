@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+/*
+ * Clena design tokens.
+ * Navy and green come from the Clena logo. Green marks actions and positive
+ * states only; teal carries data. Surfaces stay white on a cool paper canvas.
+ */
+@theme {
+  --font-sans: "Instrument Sans Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --color-navy-950: #06101F;
+  --color-navy-900: #0B1B33;
+  --color-navy-800: #132846;
+  --color-navy-700: #1C375C;
+  --color-navy-600: #2B4A73;
+
+  --color-brand-50: #E9FAF3;
+  --color-brand-100: #C9F2E1;
+  --color-brand-200: #93E5C4;
+  --color-brand-300: #55D6A4;
+  --color-brand-400: #22CC92;
+  --color-brand-500: #12C08A;
+  --color-brand-600: #0B9E72;
+  --color-brand-700: #0A7D5C;
+
+  --color-teal-50: #EAF5F8;
+  --color-teal-400: #2AA3C2;
+  --color-teal-500: #1E88A8;
+  --color-teal-600: #176D88;
+
+  --color-surface: #FFFFFF;
+  --color-canvas: #F5F7FA;
+  --color-subtle: #F0F3F7;
+  --color-line: #E3E7ED;
+  --color-line-strong: #CDD4DE;
+  --color-muted: #5B6B80;
+  --color-faint: #8794A6;
+  --color-ink: #0B1B33;
+
+  --color-danger-50: #FDF1F1;
+  --color-danger-600: #C93030;
+  --color-warning-50: #FEF7E6;
+  --color-warning-600: #B26A00;
+
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1rem;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01";
+  }
+  body {
+    @apply bg-canvas text-ink font-sans text-[14px] leading-[1.5];
+  }
+  ::selection {
+    @apply bg-brand-100 text-navy-900;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-500;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+}
+
+@utility tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+@utility brand-gradient {
+  background-image: linear-gradient(135deg, var(--color-brand-500) 0%, var(--color-teal-500) 100%);
+}
+
+@utility text-brand-gradient {
+  background-image: linear-gradient(135deg, var(--color-brand-400) 0%, var(--color-teal-400) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}

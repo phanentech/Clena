@@ -1,0 +1,61 @@
+import type { Messages } from "./en";
+
+export const sw: Messages = {
+  common: {
+    save: "Hifadhi", cancel: "Ghairi", continue: "Endelea", back: "Rudi", signIn: "Ingia", signOut: "Toka", getStarted: "Anza sasa",
+    startTrial: "Anza majaribio bila malipo", bookDemo: "Panga onyesho", search: "Tafuta", new: "Mpya", language: "Lugha", skip: "Ruka kwa sasa", allOrders: "Oda zote",
+    trialNote: "Majaribio ya siku 14 bila malipo. Hakuna kadi inayohitajika.",
+  },
+  nav: {
+    operations: "Shughuli", customersGroup: "Wateja", money: "Fedha", business: "Biashara",
+    dashboard: "Dashibodi", orders: "Oda", bookings: "Miadi", customers: "Wateja", payments: "Malipo", reports: "Ripoti",
+    services: "Huduma na bei", team: "Timu", settings: "Mipangilio", support: "Msaada", more: "Zaidi",
+    searchPlaceholder: "Tafuta oda, wateja, namba za simu", newOrder: "Oda mpya", newBooking: "Miadi mipya", addCustomer: "Ongeza mteja",
+    switchBusiness: "Badilisha biashara", sampleLoaded: "Data ya mfano imepakiwa.", manage: "Simamia",
+  },
+  marketing: {
+    features: "Vipengele", industries: "Sekta", pricing: "Bei", contact: "Wasiliana nasi",
+    eyebrow: "Mfumo wa uendeshaji kwa biashara za huduma",
+    heroA: "Tunawezesha", heroHighlight: "biashara za huduma", heroB: "kote Afrika na zaidi.",
+    heroBody: "Clena inaleta oda, miadi, wafanyakazi, malipo, usafirishaji na mawasiliano na wateja mahali pamoja, ili uendeshe biashara yako badala ya kuikimbiza.",
+    featuresKicker: "Kila kitu mahali pamoja", featuresTitle: "Imejengwa kwa jinsi biashara za huduma zinavyofanya kazi kweli.",
+    industriesTitle: "Jukwaa moja. Biashara nyingi za huduma.",
+    industriesBody: "Chagua sekta yako na Clena itaandaa mtiririko wa kazi, huduma na istilahi unazohitaji, kisha unaweza kubadilisha chochote.",
+    seeHow: "Ona jinsi inavyofanya kazi",
+    ctaTitle: "Uko tayari kuendesha biashara yako ya huduma?", ctaBody: "Tayari kwa dakika chache. Mtiririko wako wa kwanza wa kazi na huduma zinaundwa kwa ajili yako.",
+    footerTagline: "Mfumo wa uendeshaji kwa biashara za huduma. Imejengwa kwa ajili ya Afrika. Imeundwa kwa ajili ya dunia.",
+    product: "Bidhaa", company: "Kampuni", createAccount: "Fungua akaunti", rights: "Haki zote zimehifadhiwa.",
+  },
+  auth: {
+    panelTitle: "Jukwaa moja kwa kila oda, miadi, mwanatimu na malipo.",
+    point1: "Mitiririko ya kazi inayolingana na sekta yako", point2: "Tovuti ya wateja, programu za wafanyakazi na madereva", point3: "Paystack, Flutterwave na malipo ya taslimu",
+    panelFooter: "Imejengwa kwa ajili ya Afrika. Imeundwa kwa ajili ya dunia.",
+    welcomeBack: "Karibu tena", signInSubtitle: "Ingia kwenye akaunti yako ya Clena.", email: "Barua pepe", password: "Nenosiri", forgot: "Umesahau nenosiri?",
+    newHere: "Mgeni kwenye Clena?", createBusinessAccount: "Fungua akaunti ya biashara",
+    registerTitle: "Anza kuendesha biashara yako kwenye Clena", registerSubtitle: "Majaribio ya siku 14 bila malipo. Hakuna kadi inayohitajika.",
+    fullName: "Jina kamili", passwordHint: "Angalau herufi 8, ikiwemo herufi na namba.", createAccount: "Fungua akaunti",
+    haveAccount: "Tayari una akaunti?", terms: "Kwa kuendelea unakubali masharti na sera ya faragha ya Clena.",
+    resetTitle: "Weka upya nenosiri lako", resetSubtitle: "Tutakutumia kiungo salama cha kuchagua nenosiri jipya.", sendReset: "Tuma kiungo", backToSignIn: "Rudi kuingia",
+  },
+  dashboard: {
+    morning: "Habari za asubuhi", afternoon: "Habari za mchana", evening: "Habari za jioni",
+    collected: "Kilichokusanywa", orders: "Oda", averageOrder: "Wastani wa oda", newCustomers: "Wateja wapya", activeOrders: "Oda zinazoendelea", overdue: "Zimechelewa",
+    outstanding: "inadaiwa", vsPrevious: "ukilinganisha na kipindi kilichopita", workInProgress: "Kazi inayoendelea", moneyCollected: "Pesa iliyokusanywa", ordersReceived: "Oda zilizopokelewa",
+    byDay: "kwa siku", needsAttention: "Inahitaji kushughulikiwa", nothing: "Hakuna kinachohitaji kushughulikiwa sasa.", latestOrders: "Oda za karibuni",
+    todaysBookings: "Miadi ya leo", topServices: "Huduma bora", lastDays: "Siku {n} zilizopita", calendar: "Kalenda", loadSample: "Pakia data ya mfano",
+  },
+  onboarding: {
+    stepOf: "Hatua {n} kati ya {total}", finishLater: "Maliza baadaye", createBusiness: "Unda biashara", saved: "Majibu yako yanahifadhiwa kila hatua.",
+    steps: {
+      business: ["Biashara yako", "Tuambie wewe ni nani. Tutaandaa mtiririko wa kazi, majukumu na huduma za kuanzia kwa sekta yako."],
+      about: ["Jinsi unavyofanya kazi", "Maswali machache ili Clena iendane na jinsi unavyofanya kazi. Unaweza kubadilisha baadaye."],
+      location: ["Tawi la kwanza", "Mahali wateja wanapokupata na saa zako za kazi. Miadi na tarehe za kukamilisha zinatumia saa hizi."],
+      services: ["Huduma na bei", "Tumeongeza huduma za kawaida za sekta yako. Weka bei zako, zima usizotoa na ongeza zilizobaki."],
+      payments: ["Malipo", "Chagua jinsi wateja wanavyoweza kulipa. Maelezo yako ya benki yataonekana kwenye ankara kwa wanaolipa kwa uhamisho."],
+      notifications: ["Taarifa kwa wateja", "Wateja waliokubali hupokea taarifa moja kwa moja nyakati hizi."],
+      branding: ["Utambulisho", "Jinsi biashara yako inavyoonekana kwenye risiti, ankara na tovuti ya wateja."],
+      team: ["Timu yako", "Waalike unaofanya nao kazi. Wanajiunga na biashara wanapojisajili kwa barua pepe ileile."],
+      finish: ["Tayari", "Kila kitu kiko tayari. Chagua jinsi unavyotaka kuanza."],
+    },
+  },
+};
