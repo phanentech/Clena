@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 import {
   BarChart3, CalendarDays, ChevronDown, ClipboardList, LayoutDashboard, LifeBuoy, LogOut, Menu, MessagesSquare, TicketPercent, Plus, Search, Settings, Tags, UserCog, Users, Wallet,
-  type LucideIcon,
+  type LucideIcon, ScanLine, Truck, ShieldAlert, Factory, ListChecks, Repeat
 } from "lucide-react";
 import { LogoMark } from "@/components/brand/logo";
 import { Avatar } from "@/components/ui/primitives";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import type { NavGroup } from "./nav";
 import { LanguageSwitcher } from "@/components/i18n/language-switcher";
 
-const ICONS: Record<string, LucideIcon> = { LayoutDashboard, ClipboardList, CalendarDays, Users, Wallet, BarChart3, Tags, UserCog, Settings, LifeBuoy, MessagesSquare, TicketPercent };
+const ICONS: Record<string, LucideIcon> = { LayoutDashboard, ClipboardList, CalendarDays, Users, Wallet, BarChart3, Tags, UserCog, Settings, LifeBuoy, MessagesSquare, TicketPercent, ScanLine, Truck, ShieldAlert, Factory, ListChecks, Repeat };
 
 type Props = {
   nav: NavGroup[];

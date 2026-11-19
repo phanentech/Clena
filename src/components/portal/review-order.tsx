@@ -3,17 +3,18 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState, useTransition } from "react";
-import { Loader2, MapPin, Plus, Store, Trash2, Truck } from "lucide-react";
-import { placeOrder, quoteOrder, saveAddress, type Quote } from "@/app/b/[slug]/actions";
-import type { PortalService, PortalSettings } from "@/lib/portal-shared";
-import { zonedDay, zonedHour } from "@/lib/time";
+import { Camera, Info, Loader2, MapPin, Plus, Star, Store, Trash2, Truck, X, Zap } from "lucide-react";
+import { placeOrder, quoteOrder, saveAddress, slotAvailability, type Quote } from "@/app/b/[slug]/actions";
+import type { Loyalty, PortalService, PortalSettings, Zone } from "@/lib/portal-shared";
+import { compressImage } from "@/lib/image";
+import { zonedDay, zonedHour, zonedToUtc } from "@/lib/time";
 import { cn, formatMoney } from "@/lib/utils";
 import { useCart } from "./cart";
 import { ServiceIcon } from "./service-icon";
 import { Stepper } from "./services-browser";
 import { PCard, pButton, pInput } from "./ui";
 
-type Address = { id: string; label: string; line1: string; line2: string | null; city: string | null; is_default: boolean };
+type Address = { id: string; label: string; line1: string; line2: string | null; city: string | null; is_default: boolean; zone_id?: string | null };
 
 function slotsFor(p: PortalSettings) {
   const out: number[] = [];
@@ -28,8 +29,9 @@ function dayLabel(day: string, tz: string) {
   return new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${day}T12:00:00Z`));
 }
 
-export function ReviewOrder({ slug, services, portal, currency, timezone, industry, addresses }: {
+export function ReviewOrder({ slug, services, portal, currency, timezone, industry, addresses, zones = [], loyalty, pointsBalance = 0 }: {
   slug: string; services: PortalService[]; portal: PortalSettings; currency: string; timezone: string; industry: string | null; addresses: Address[];
+  zones?: Zone[]; loyalty?: Loyalty; pointsBalance?: number;
 }) {
   const router = useRouter();
   const cart = useCart();
@@ -47,19 +49,28 @@ export function ReviewOrder({ slug, services, portal, currency, timezone, indust
   const [notes, setNotes] = useState("");
   const [addrError, setAddrError] = useState<string | null>(null);
   const [savingAddr, startSavingAddr] = useTransition();
+  const [express, setExpress] = useState(false);
+  const [usePoints, setUsePoints] = useState(false);
+  const [photos, setPhotos] = useState<string[]>([]);
+  const [full, setFull] = useState<Set<number>>(new Set());
+  const canRedeem = Boolean(loyalty?.enabled) && pointsBalance >= (loyalty?.min_redeem ?? Infinity);
+  const zoneName = (id?: string | null) => zones.find((z) => z.id === id)?.name;
 
   const slots = slotsFor(portal);
   const days = useMemo(() => Array.from({ length: 8 }, (_, i) => zonedDay(timezone, i)), [timezone]);
   const nowHour = zonedHour(timezone);
-  const pickupSlots = (day: string) => slots.filter((h) => day !== days[0] || h >= nowHour + portal.pickup_lead_hours + 1);
+  const slotMs = (day: string, h: number) => Date.parse(zonedToUtc(`${day}T${hh(h)}`, timezone));
+  const pickupSlots = (day: string) => slots.filter((h) => (day !== days[0] || h >= nowHour + portal.pickup_lead_hours + 1));
   const firstPickupDay = days.find((d) => pickupSlots(d).length > 0) ?? days[1];
   const [pickDay, setPickDay] = useState(firstPickupDay);
   const [pickHour, setPickHour] = useState<number>(pickupSlots(firstPickupDay)[0] ?? slots[0]);
   const deliveryDays = useMemo(() => {
     const start = days.indexOf(pickDay);
-    return Array.from({ length: 8 }, (_, i) => zonedDay(timezone, Math.max(start, 0) + i));
+    return Array.from({ length: 10 }, (_, i) => zonedDay(timezone, Math.max(start, 0) + i));
   }, [days, pickDay, timezone]);
-  const deliverySlots = (day: string) => slots.filter((h) => day !== pickDay || h >= pickHour + 4);
+  // turnaround: express or standard hours between collection and delivery
+  const needHours = Math.max(express && portal.express_enabled ? portal.express_hours ?? 24 : portal.standard_hours ?? 4, 2);
+  const deliverySlots = (day: string) => slots.filter((h) => (slotMs(day, h) - slotMs(pickDay, pickHour)) / 3_600_000 >= needHours);
   const defaultDelDay = deliveryDays.find((d, i) => i >= 1 && deliverySlots(d).length > 0) ?? deliveryDays[1];
   const [delDay, setDelDay] = useState(defaultDelDay);
   const [delHour, setDelHour] = useState<number>(pickHour);
@@ -68,18 +79,28 @@ export function ReviewOrder({ slug, services, portal, currency, timezone, indust
   const effDelDay = deliveryDays.includes(delDay) && deliverySlots(delDay).length > 0 ? delDay : defaultDelDay;
   const effDelHour = deliverySlots(effDelDay).includes(delHour) ? delHour : (deliverySlots(effDelDay)[0] ?? slots[0]);
 
+  useEffect(() => {
+    if (!portal.slot_capacity) return;
+    let live = true;
+    slotAvailability(slug).then((rows) => {
+      if (live) setFull(new Set(rows.filter((r) => r.capacity > 0 && r.booked >= r.capacity).map((r) => Date.parse(r.slot_start))));
+    });
+    return () => { live = false; };
+  }, [slug, portal.slot_capacity]);
+
   const itemsKey = JSON.stringify(lines);
   useEffect(() => {
     if (!cart.ready || lines.length === 0) return;
     let live = true;
     const t = setTimeout(async () => {
-      const r = await quoteOrder(slug, { items: lines, promo, mode });
+      const r = await quoteOrder(slug, { items: lines, promo, mode, address: mode === "pickup_delivery" && addressId ? addressId : null,
+        express, points: usePoints ? pointsBalance : 0 });
       if (!live) return;
       if (r.error) { setQuote(null); setQuoteError(r.error); } else { setQuote(r.quote!); setQuoteError(null); }
     }, 250);
     return () => { live = false; clearTimeout(t); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [itemsKey, promo, mode, cart.ready, slug]);
+  }, [itemsKey, promo, mode, cart.ready, slug, addressId, express, usePoints]);
 
   if (!cart.ready) return <div className="grid h-40 place-items-center text-[#9AA5B5]"><Loader2 className="size-5 animate-spin" /></div>;
   if (lines.length === 0) {
@@ -103,6 +124,7 @@ export function ReviewOrder({ slug, services, portal, currency, timezone, indust
         delivery_address: mode === "pickup_delivery" ? addressId : null,
         pickup_local: mode === "pickup_delivery" ? `${pickDay}T${hh(pickHour)}` : null,
         delivery_local: mode === "pickup_delivery" ? `${effDelDay}T${hh(effDelHour)}` : null,
+        express, points: usePoints ? pointsBalance : 0, photos,
       });
       if (r.error) { setPlaceError(r.error); return; }
       cart.clear();
@@ -160,7 +182,8 @@ export function ReviewOrder({ slug, services, portal, currency, timezone, indust
             <PCard className="p-4">
               <p className="text-[14px] font-semibold">Collection time</p>
               <DayPicker days={days.filter((d) => pickupSlots(d).length > 0)} value={pickDay} onChange={(d) => { setPickDay(d); setPickHour(pickupSlots(d)[0]); }} tz={timezone} />
-              <SlotPicker slots={pickupSlots(pickDay)} value={pickHour} onChange={setPickHour} />
+              <SlotPicker slots={pickupSlots(pickDay)} value={pickHour} onChange={setPickHour} disabled={(h) => full.has(slotMs(pickDay, h))} />
+              {full.size > 0 && <p className="mt-1.5 text-[11.5px] text-[#8A96A8]">Greyed-out times are fully booked.</p>}
               <p className="mt-4 text-[14px] font-semibold">Delivery time</p>
               <DayPicker days={deliveryDays.filter((d) => deliverySlots(d).length > 0)} value={effDelDay} onChange={(d) => { setDelDay(d); setDelHour(deliverySlots(d)[0]); }} tz={timezone} />
               <SlotPicker slots={deliverySlots(effDelDay)} value={effDelHour} onChange={setDelHour} />
@@ -176,7 +199,7 @@ export function ReviewOrder({ slug, services, portal, currency, timezone, indust
                   <button key={a.id} type="button" role="radio" aria-checked={addressId === a.id} onClick={() => setAddressId(a.id)}
                     className={cn("flex items-start gap-3 rounded-[calc(var(--p-radius)*0.7)] border p-3 text-left", addressId === a.id ? "border-[var(--p-secondary)] bg-[color-mix(in_srgb,var(--p-secondary)_5%,white)]" : "border-[#E6EAF1]")}>
                     <MapPin className={cn("mt-0.5 size-4 shrink-0", addressId === a.id ? "text-[var(--p-secondary)]" : "text-[#9AA5B5]")} />
-                    <span className="min-w-0 text-[13px]"><span className="block font-semibold">{a.label}</span><span className="block text-[#5B6B80]">{[a.line1, a.line2, a.city].filter(Boolean).join(", ")}</span></span>
+                    <span className="min-w-0 text-[13px]"><span className="block font-semibold">{a.label}{zoneName(a.zone_id) && <span className="font-normal text-[#6B7A90]"> · {zoneName(a.zone_id)}</span>}</span><span className="block text-[#5B6B80]">{[a.line1, a.line2, a.city].filter(Boolean).join(", ")}</span>{zones.length > 0 && !a.zone_id && <span className="block text-[11.5px] text-[#9A5B00]">Add your area to use this address</span>}</span>
                   </button>
                 ))}
               </div>
@@ -190,6 +213,12 @@ export function ReviewOrder({ slug, services, portal, currency, timezone, indust
                     <input name="city" aria-label="City" placeholder="City / area" className={pInput} />
                     <input name="landmark" aria-label="Landmark" placeholder="Landmark (optional)" className={pInput} />
                   </div>
+                  {zones.length > 0 && (
+                    <select name="zone_id" required defaultValue="" aria-label="Area" className={pInput}>
+                      <option value="" disabled>Choose your area</option>
+                      {zones.map((z) => <option key={z.id} value={z.id}>{z.name}{z.areas ? ` (${z.areas.split(",").slice(0, 3).join(", ")}…)` : ""}</option>)}
+                    </select>
+                  )}
                   {addrError && <p role="alert" className="text-[12.5px] text-[#C93030]">{addrError}</p>}
                   <div className="flex gap-2">
                     <button type="submit" disabled={savingAddr} className={`${pButton.primary} h-10 flex-1`}>{savingAddr && <Loader2 className="size-4 animate-spin" />}Save address</button>
@@ -205,7 +234,33 @@ export function ReviewOrder({ slug, services, portal, currency, timezone, indust
           <label htmlFor="notes" className="text-[14px] font-semibold">Notes for us</label>
           <textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={1000} rows={2}
             placeholder="Stains, fabric care, gate code…" className={`${pInput} mt-2 h-auto py-3`} />
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {photos.map((ph, i) => (
+              <span key={i} className="relative">
+                {/* eslint-disable-next-line @next/next/no-img-element -- local preview */}
+                <img src={ph} alt="" className="size-16 rounded-[10px] object-cover" />
+                <button type="button" aria-label="Remove photo" onClick={() => setPhotos((p) => p.filter((_, j) => j !== i))} className="absolute -end-1.5 -top-1.5 grid size-5 place-items-center rounded-full bg-[#0E1A2B] text-white"><X className="size-3" /></button>
+              </span>
+            ))}
+            {photos.length < 3 && (
+              <label className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full border border-[#DCE2EB] bg-white px-4 text-[13px] font-medium text-[#4A5A70]">
+                <Camera className="size-4" />Add photo
+                <input type="file" accept="image/*" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { const d = await compressImage(f); setPhotos((p) => [...p, d].slice(0, 3)); } e.target.value = ""; }} />
+              </label>
+            )}
+            <span className="text-[11.5px] text-[#8A96A8]">Optional: show us stains or delicate items.</span>
+          </div>
         </PCard>
+
+        {portal.express_enabled && (
+          <button type="button" role="switch" aria-checked={express} onClick={() => setExpress((v) => !v)}
+            className={cn("flex items-center gap-3 rounded-[var(--p-radius)] border bg-white p-4 text-left", express ? "border-[var(--p-accent)] ring-3 ring-[color-mix(in_srgb,var(--p-accent)_15%,transparent)]" : "border-[#E6EAF1]")}>
+            <Zap className={cn("size-5 shrink-0", express ? "text-[var(--p-accent)]" : "text-[#9AA5B5]")} />
+            <span className="flex-1"><span className="block text-[14px] font-semibold">Express service</span>
+              <span className="block text-[12px] text-[#6B7A90]">Back within {portal.express_hours ?? 24} hours instead of {portal.standard_hours ?? 48}. +{Number(portal.express_surcharge_pct ?? 0)}%</span></span>
+            <span className={cn("relative h-6 w-11 rounded-full", express ? "bg-[var(--p-accent)]" : "bg-[#D3DAE5]")}><span className={cn("absolute top-0.5 size-5 rounded-full bg-white shadow transition-all", express ? "start-[22px]" : "start-0.5")} /></span>
+          </button>
+        )}
       </div>
 
       <div className="grid gap-4 lg:sticky lg:top-4">
@@ -219,6 +274,15 @@ export function ReviewOrder({ slug, services, portal, currency, timezone, indust
           {quote?.promo_code && <p className="mt-2 text-[12.5px] font-medium text-[color-mix(in_srgb,var(--p-accent)_60%,#0B1B33)]">{quote.promo_title ?? quote.promo_code} applied</p>}
         </PCard>
 
+        {canRedeem && (
+          <PCard className="flex items-center gap-3 p-4">
+            <Star className="size-5 shrink-0 text-[var(--p-accent)]" />
+            <span className="flex-1 text-[13px]"><span className="block font-semibold">Use your {pointsBalance.toLocaleString()} points</span>
+              <span className="text-[#6B7A90]">Worth up to {money(pointsBalance * (loyalty?.point_value ?? 0))}</span></span>
+            <input type="checkbox" checked={usePoints} onChange={(e) => setUsePoints(e.target.checked)} aria-label="Use points" className="size-5 accent-[var(--p-accent)]" />
+          </PCard>
+        )}
+
         <PCard className="p-4">
           <p className="text-[14px] font-semibold">Checkout details</p>
           {quoteError ? <p role="alert" className="mt-2 text-[13px] text-[#C93030]">{quoteError}</p> : !quote ? (
@@ -228,19 +292,28 @@ export function ReviewOrder({ slug, services, portal, currency, timezone, indust
               <Row k="Services" v={money(quote.subtotal)} />
               {quote.tax > 0 && <Row k="Tax" v={money(quote.tax)} />}
               {quote.service_fee > 0 && <Row k="Service charge" v={money(quote.service_fee)} />}
-              {mode === "pickup_delivery" && <Row k="Collection & delivery" v={quote.delivery_fee > 0 ? money(quote.delivery_fee) : "Free"} />}
+              {Number(quote.express_fee) > 0 && <Row k="Express" v={money(Number(quote.express_fee))} />}
+              {mode === "pickup_delivery" && <Row k={`Collection & delivery${quote.zone_name ? ` · ${quote.zone_name}` : ""}`} v={quote.delivery_fee > 0 ? money(quote.delivery_fee) : quote.subscription_name ? "Free with your plan" : "Free"} />}
               {quote.discount > 0 && <Row k={`Discount (${quote.promo_code})`} v={`−${money(quote.discount)}`} accent />}
+              {Number(quote.subscription_discount) > 0 && <Row k={`${quote.subscription_name} plan · ${Number(quote.subscription_kg)} kg covered`} v={`−${money(Number(quote.subscription_discount))}`} accent />}
+              {Number(quote.points_discount) > 0 && <Row k={`${Number(quote.points_used).toLocaleString()} points`} v={`−${money(Number(quote.points_discount))}`} accent />}
               <div className="mt-1 flex items-center justify-between border-t border-[#EEF1F5] pt-3">
                 <dt className="font-semibold">Total</dt><dd className="text-[18px] font-semibold tabular-nums">{money(quote.total)}</dd>
               </div>
               {quote.below_minimum && <p className="text-[12.5px] text-[#9A5B00]">Minimum order is {money(quote.min_order)}. Add a little more.</p>}
+              {quote.zone_error && mode === "pickup_delivery" && <p role="alert" className="text-[12.5px] text-[#C93030]">{quote.zone_error}</p>}
+              {quote.is_estimate && (
+                <p className="mt-1 flex gap-1.5 rounded-[calc(var(--p-radius)*0.5)] bg-[#F6F8FB] p-2.5 text-[12px] text-[#4A5A70]">
+                  <Info className="mt-px size-3.5 shrink-0" />This is an estimate. The final price is confirmed after we weigh and inspect your items. If it&apos;s higher, we&apos;ll ask you to approve it first.
+                </p>
+              )}
             </dl>
           )}
           <p className="mt-3 text-[11.5px] text-[#8A96A8]">Pay when we collect or deliver, by cash, card or transfer. Your order page shows our bank details.</p>
         </PCard>
 
         {placeError && <p role="alert" className="rounded-[calc(var(--p-radius)*0.7)] bg-[#FDEDED] px-3 py-2 text-[13px] text-[#B42828]">{placeError}</p>}
-        <button type="button" onClick={submit} disabled={placing || !quote || quote.below_minimum || Boolean(quote.promo_error)} className={`${pButton.primary} h-14 w-full text-[15px]`}>
+        <button type="button" onClick={submit} disabled={placing || !quote || quote.below_minimum || Boolean(quote.promo_error) || (mode === "pickup_delivery" && Boolean(quote.zone_error))} className={`${pButton.primary} h-14 w-full text-[15px]`}>
           {placing && <Loader2 className="size-4 animate-spin" />}
           {quote ? `Place order · ${money(quote.total)}` : "Place order"}
         </button>
@@ -272,12 +345,12 @@ function DayPicker({ days, value, onChange, tz }: { days: string[]; value: strin
   );
 }
 
-function SlotPicker({ slots, value, onChange }: { slots: number[]; value: number; onChange: (h: number) => void }) {
+function SlotPicker({ slots, value, onChange, disabled }: { slots: number[]; value: number; onChange: (h: number) => void; disabled?: (h: number) => boolean }) {
   return (
     <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-4">
       {slots.map((h) => (
-        <button key={h} type="button" onClick={() => onChange(h)} aria-pressed={value === h}
-          className={cn("h-9 rounded-[calc(var(--p-radius)*0.5)] border text-[12px] font-medium tabular-nums",
+        <button key={h} type="button" onClick={() => onChange(h)} aria-pressed={value === h} disabled={disabled?.(h)}
+          className={cn("h-9 rounded-[calc(var(--p-radius)*0.5)] border text-[12px] font-medium tabular-nums disabled:cursor-not-allowed disabled:bg-[#F3F5F9] disabled:text-[#B8C1CE] disabled:line-through",
             value === h ? "border-[var(--p-secondary)] bg-[color-mix(in_srgb,var(--p-secondary)_8%,white)] text-[var(--p-primary)]" : "border-[#E6EAF1] bg-white text-[#4A5A70]")}>
           {hh(h)}–{hh(h + 2)}
         </button>

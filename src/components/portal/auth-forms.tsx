@@ -10,7 +10,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   return <label className="grid gap-1.5 text-[13px] font-medium text-[#0E1A2B]">{label}{children}</label>;
 }
 
-export function PortalSignUpForm({ slug, name }: { slug: string; name: string }) {
+export function PortalSignUpForm({ slug, name, referral }: { slug: string; name: string; referral?: string | null }) {
   const [state, action, pending] = useActionState(portalSignUp.bind(null, slug), undefined);
   if (state?.success) {
     return (
@@ -26,6 +26,7 @@ export function PortalSignUpForm({ slug, name }: { slug: string; name: string })
       <Field label="Phone number"><input name="phone" type="tel" autoComplete="tel" className={pInput} placeholder="+234 801 234 5678" /></Field>
       <Field label="Email"><input name="email" type="email" required autoComplete="email" className={pInput} placeholder="you@example.com" /></Field>
       <Field label="Password"><input name="password" type="password" required minLength={8} autoComplete="new-password" className={pInput} placeholder="At least 8 characters, with a number" /></Field>
+      <Field label="Referral code (optional)"><input name="ref" defaultValue={referral ?? ""} maxLength={20} autoCapitalize="characters" className={`${pInput} uppercase`} placeholder="From a friend" /></Field>
       {state?.error && <p role="alert" className="text-[13px] text-[#C93030]">{state.error}</p>}
       <button type="submit" disabled={pending} className={pButton.primary}>
         {pending && <Loader2 className="size-4 animate-spin" />}Create account

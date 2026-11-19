@@ -6,7 +6,7 @@ import { deleteAddress, saveAddress, updateProfile } from "@/app/b/[slug]/action
 import { cn } from "@/lib/utils";
 import { PCard, pButton, pInput } from "./ui";
 
-type Address = { id: string; label: string; line1: string; line2: string | null; city: string | null; state: string | null; landmark: string | null; is_default: boolean };
+type Address = { id: string; label: string; line1: string; line2: string | null; city: string | null; state: string | null; landmark: string | null; is_default: boolean; zone_id?: string | null };
 
 const METHODS = [
   ["bank_transfer", "Bank transfer", Landmark],
@@ -62,7 +62,7 @@ export function ProfileForm({ slug, customer, email }: {
   );
 }
 
-export function AddressBook({ slug, addresses }: { slug: string; addresses: Address[] }) {
+export function AddressBook({ slug, addresses, zones = [] }: { slug: string; addresses: Address[]; zones?: { id: string; name: string }[] }) {
   const [editing, setEditing] = useState<string | "new" | null>(addresses.length ? null : "new");
   const [state, action, pending] = useActionState(async (s: Awaited<ReturnType<typeof saveAddress>> | undefined, fd: FormData) => {
     const r = await saveAddress(slug, undefined, fd);
@@ -83,6 +83,7 @@ export function AddressBook({ slug, addresses }: { slug: string; addresses: Addr
               <p className="font-semibold">{a.label}{a.is_default && <span className="ml-2 rounded-full bg-[#EEF1F6] px-2 py-0.5 text-[10.5px] font-semibold text-[#4A5A70]">Default</span>}</p>
               <p className="text-[#5B6B80]">{[a.line1, a.line2, a.city, a.state].filter(Boolean).join(", ")}</p>
               {a.landmark && <p className="text-[12px] text-[#8A96A8]">Near {a.landmark}</p>}
+              {zones.length > 0 && <p className={a.zone_id ? "text-[12px] text-[#8A96A8]" : "text-[12px] text-[#9A5B00]"}>{zones.find((z) => z.id === a.zone_id)?.name ?? "Edit to choose your area"}</p>}
             </div>
             <button type="button" aria-label={`Edit ${a.label}`} onClick={() => setEditing(a.id)} className="grid size-8 place-items-center rounded-full text-[#6B7A90] hover:bg-[#F3F5F9]"><Pencil className="size-4" /></button>
             <button type="button" aria-label={`Delete ${a.label}`} disabled={removing} onClick={() => startRemoving(() => deleteAddress(slug, a.id))} className="grid size-8 place-items-center rounded-full text-[#6B7A90] hover:bg-[#FDF3F3] hover:text-[#C93030]"><Trash2 className="size-4" /></button>
@@ -102,6 +103,12 @@ export function AddressBook({ slug, addresses }: { slug: string; addresses: Addr
             <input name="state" defaultValue={current?.state ?? ""} aria-label="State" placeholder="State" className={pInput} />
           </div>
           <input name="landmark" defaultValue={current?.landmark ?? ""} aria-label="Landmark" placeholder="Nearest landmark (optional)" className={pInput} />
+          {zones.length > 0 && (
+            <select name="zone_id" required defaultValue={current?.zone_id ?? ""} aria-label="Area" className={pInput}>
+              <option value="" disabled>Choose your area</option>
+              {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
+            </select>
+          )}
           <label className="flex items-center gap-2 text-[13px]"><input type="checkbox" name="is_default" defaultChecked={current?.is_default} className="size-4 accent-[var(--p-secondary)]" />Use as my default address</label>
           {state?.error && <p role="alert" className="text-[12.5px] text-[#C93030]">{state.error}</p>}
           <div className="flex gap-2">

@@ -1,6 +1,6 @@
 import type { Permission } from "@/lib/auth/permissions";
 
-export type NavItem = { href: string; label: string; key?: string; icon: string; permission: Permission; mobile?: boolean };
+export type NavItem = { href: string; label: string; key?: string; icon: string; permission: Permission; mobile?: boolean; module?: "laundry_ops" };
 export type NavGroup = { label: string; key?: string; items: NavItem[] };
 
 /**
@@ -14,6 +14,11 @@ export const APP_NAV: NavGroup[] = [
       { href: "/app/dashboard", label: "Dashboard", key: "dashboard", icon: "LayoutDashboard", permission: "dashboard.view", mobile: true },
       { href: "/app/orders", label: "Orders", key: "orders", icon: "ClipboardList", permission: "orders.view", mobile: true },
       { href: "/app/bookings", label: "Bookings", key: "bookings", icon: "CalendarDays", permission: "bookings.view", mobile: true },
+      { href: "/staff", label: "Floor app", key: "floorApp", icon: "ScanLine", permission: "orders.view", module: "laundry_ops" },
+      { href: "/app/dispatch", label: "Dispatch", key: "dispatch", icon: "Truck", permission: "logistics.manage", module: "laundry_ops" },
+      { href: "/app/incidents", label: "Incidents", key: "incidents", icon: "ShieldAlert", permission: "orders.view", module: "laundry_ops" },
+      { href: "/app/partners", label: "Partners", key: "partners", icon: "Factory", permission: "orders.view", module: "laundry_ops" },
+      { href: "/app/checklist", label: "Daily checklist", key: "checklist", icon: "ListChecks", permission: "orders.view", module: "laundry_ops" },
     ],
   },
   {
@@ -22,6 +27,7 @@ export const APP_NAV: NavGroup[] = [
       { href: "/app/customers", label: "Customers", key: "customers", icon: "Users", permission: "customers.view", mobile: true },
       { href: "/app/messages", label: "Messages", key: "messages", icon: "MessagesSquare", permission: "customers.view" },
       { href: "/app/offers", label: "Offers", key: "offers", icon: "TicketPercent", permission: "settings.manage" },
+      { href: "/app/subscriptions", label: "Subscriptions", key: "subscriptions", icon: "Repeat", permission: "customers.view", module: "laundry_ops" },
     ],
   },
   {
