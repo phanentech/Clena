@@ -29,6 +29,12 @@ export const PERMISSIONS = [
   "ai.use",
   "settings.manage",
   "billing.manage",
+  "ops.receive",
+  "ops.sort",
+  "ops.process",
+  "ops.qc",
+  "incidents.manage",
+  "support.manage",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -40,11 +46,18 @@ export const ROLE_LABELS: Record<string, string> = {
   staff: "Staff",
   driver: "Driver",
   accountant: "Accountant",
+  ops_manager: "Operations Manager",
+  front_desk: "Front Desk",
+  sorting_staff: "Sorting Staff",
+  processing_staff: "Processing Staff",
+  quality_control: "Quality Control",
+  finance: "Finance",
+  support: "Support",
 };
 
 /** Where each role lands after sign-in. */
 export function homeForRole(roleKey: string) {
   if (roleKey === "driver") return "/driver";
-  if (roleKey === "staff") return "/staff";
+  if (["staff", "sorting_staff", "processing_staff", "quality_control"].includes(roleKey)) return "/staff";
   return "/app/dashboard";
 }

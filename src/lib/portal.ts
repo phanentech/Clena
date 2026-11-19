@@ -18,6 +18,8 @@ export const getBusiness = cache(async (slug: string): Promise<Business | null> 
     branding: b.branding ?? {},
     services: (b.services ?? []).map((s) => ({ ...s, price: Number(s.price), tax_rate: Number(s.tax_rate) })),
     offers: (b.offers ?? []).map((o) => ({ ...o, value: Number(o.value), min_order: Number(o.min_order) })),
+    zones: (b.zones ?? []).map((z) => ({ ...z, delivery_fee: Number(z.delivery_fee), min_order: Number(z.min_order) })),
+    plans: (b.plans ?? []).map((p) => ({ ...p, price: Number(p.price), included_kg: Number(p.included_kg) })),
     portal: b.portal
       ? { ...b.portal, delivery_fee: Number(b.portal.delivery_fee), service_charge_pct: Number(b.portal.service_charge_pct), min_order: Number(b.portal.min_order) }
       : (b.portal as unknown as PortalSettings),

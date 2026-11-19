@@ -13,7 +13,12 @@ export type PortalSettings = {
   delivery_fee: number; service_charge_pct: number; min_order: number; pickup_lead_hours: number;
   slot_start_hour: number; slot_end_hour: number; drop_off_enabled: boolean; pickup_enabled: boolean;
   support_phone: string | null; support_whatsapp: string | null; support_email: string | null;
+  slot_capacity?: number; express_enabled?: boolean; express_surcharge_pct?: number; express_hours?: number; standard_hours?: number;
+  faqs?: { q: string; a: string }[];
 };
+export type Zone = { id: string; name: string; areas: string | null; delivery_fee: number; min_order: number };
+export type Plan = { id: string; name: string; description: string | null; price: number; period_days: number; included_kg: number; free_delivery: boolean };
+export type Loyalty = { enabled: boolean; points_per_100: number; point_value: number; min_redeem: number; referral_points: number; referee_points: number };
 export type Branding = {
   logo_data?: string | null; app_name?: string | null; tagline?: string | null;
   primary_color?: string | null; secondary_color?: string | null; accent_color?: string | null;
@@ -24,6 +29,7 @@ export type Business = {
   currency: string; country: string | null; timezone: string; address: string | null;
   branding: Branding; portal: PortalSettings;
   categories: { id: string; name: string }[]; services: PortalService[]; offers: PortalOffer[];
+  laundry_ops?: boolean; zones?: Zone[]; plans?: Plan[]; loyalty?: Loyalty;
 };
 
 /** Clena's own colours are the default for every business until it sets its own. */

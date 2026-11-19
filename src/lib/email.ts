@@ -1,3 +1,4 @@
+import { publicEnv } from "@/lib/env";
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { serverEnv } from "@/lib/env.server";
@@ -25,7 +26,7 @@ export async function processEmailOutbox(limit = 20) {
       const res = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: { Authorization: `Bearer ${serverEnv.resendApiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ from, to: [mail.to_email], subject: mail.subject, text: mail.body_text }),
+        body: JSON.stringify({ from, to: [mail.to_email], subject: mail.subject, text: mail.body_text.replaceAll("{{APP_URL}}", publicEnv.appUrl) }),
       });
       const body = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
       if (!res.ok) throw new Error(body.message ?? `Resend responded ${res.status}`);
