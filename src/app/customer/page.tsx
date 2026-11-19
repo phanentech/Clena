@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { PackageSearch } from "lucide-react";
 import { PortalShell } from "@/components/app/portal-shell";
 import { Badge, Card, EmptyState, StageBadge } from "@/components/ui/primitives";
@@ -12,6 +13,9 @@ export const metadata: Metadata = { title: "My orders", robots: { index: false }
 export default async function CustomerHome() {
   const user = await requireUser("/customer");
   const profiles = await getCustomerProfiles();
+  // Each customer login belongs to one business: open that business's own app.
+  const slug = (profiles[0]?.tenants as unknown as { slug: string } | null)?.slug;
+  if (profiles.length === 1 && slug) redirect(`/b/${slug}`);
   const supabase = await createClient();
 
   // RLS returns only orders that belong to this login's customer records.

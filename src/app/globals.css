@@ -47,7 +47,40 @@
 }
 
 @layer base {
+  /* Mobile-first safety net:
+     - grid children may shrink below their content, so a wide table or tab
+       strip scrolls inside its own box instead of stretching the whole page;
+     - nothing can push the page sideways. */
+  :where(.grid) > * { min-width: 0; }
+  html, body { overflow-x: clip; }
+  img, svg, video, canvas { max-width: 100%; }
+  /* iOS zooms into inputs with text under 16px; on touch screens use 16px. */
+  @media (hover: none) and (pointer: coarse) {
+    input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]), select, textarea { font-size: 16px !important; }
+  }
+  /* Tables become cards on phones: the first cell is the title, the rest read "Label  value". */
+  @media (max-width: 639px) {
+    table.tbl-stack, table.tbl-stack tbody { display: block; width: 100%; }
+    table.tbl-stack thead { display: none; }
+    table.tbl-stack tbody tr { display: block; padding: 12px 16px; border-bottom: 1px solid var(--color-line); }
+    table.tbl-stack tbody tr:last-child { border-bottom: 0; }
+    /* label in the first column, the cell's own content stacked in the second */
+    table.tbl-stack tbody td { display: grid; grid-template-columns: minmax(0, max-content) minmax(0, 1fr); column-gap: 12px; align-items: center; justify-items: end;
+      min-height: 28px; padding: 3px 0 !important; border: 0 !important; text-align: end !important; white-space: normal; }
+    table.tbl-stack tbody td > * { grid-column: 2; min-width: 0; max-width: 100%; }
+    table.tbl-stack tbody td::before { content: attr(data-label); grid-column: 1; grid-row: 1 / span 6; align-self: center; justify-self: start; max-width: 40vw;
+      color: var(--color-muted); font-size: 12px; font-weight: 500; text-align: start; }
+    table.tbl-stack tbody td:first-child { grid-template-columns: minmax(0, 1fr); justify-items: start; text-align: start !important; font-weight: 600; padding-bottom: 6px !important; }
+    table.tbl-stack tbody td:first-child > * { grid-column: 1; }
+    table.tbl-stack tbody td:first-child::before, table.tbl-stack tbody td[data-label=""]::before { content: none; }
+    table.tbl-stack tbody td[data-label=""] { grid-template-columns: minmax(0, 1fr); }
+    table.tbl-stack tbody td[data-label=""] > * { grid-column: 1; }
+    table.tbl-stack tbody td:empty { display: none; }
+    table.tbl-stack tbody td[colspan] { justify-content: center; text-align: center !important; }
+    table.tbl-stack tbody td[colspan]::before { content: none; }
+  }
   html {
+    -webkit-text-size-adjust: 100%;
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     font-feature-settings: "ss01";

@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
   const [{ data: memberships }, { data: platform }, { data: customers }] = await Promise.all([
     supabase.rpc("my_memberships"),
     supabase.from("platform_admins").select("role").eq("user_id", auth.user.id).maybeSingle(),
-    supabase.from("customers").select("id").eq("user_id", auth.user.id).limit(1),
+    supabase.from("customers").select("id, tenants(slug)").eq("user_id", auth.user.id).limit(1),
   ]);
 
   if (memberships && memberships.length > 0) {
@@ -26,6 +26,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL(homeForRole(first.role_key), origin));
   }
   if (platform) return NextResponse.redirect(new URL("/platform", origin));
-  if (customers && customers.length > 0) return NextResponse.redirect(new URL("/customer", origin));
+  if (customers && customers.length > 0) {
+    const slug = (customers[0].tenants as unknown as { slug: string } | null)?.slug;
+    return NextResponse.redirect(new URL(slug ? `/b/${slug}` : "/customer", origin));
+  }
+  const joinSlug = (auth.user.user_metadata as { join_slug?: string } | null)?.join_slug;
+  if (joinSlug && /^[a-z0-9-]{3,48}$/.test(joinSlug)) return NextResponse.redirect(new URL(`/b/${joinSlug}/join/complete`, origin));
   return NextResponse.redirect(new URL("/onboarding/business", origin));
 }
