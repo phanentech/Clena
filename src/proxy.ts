@@ -10,6 +10,22 @@ const PROTECTED_PREFIXES = ["/app", "/onboarding", "/customer", "/staff", "/driv
  * authorization happens server-side in each layout/page/action and in RLS.
  */
 export async function proxy(request: NextRequest) {
+  // Supabase sends people to the Site URL (often "/") when a redirect isn't on its allow-list.
+  // Catch the confirmation code wherever it lands and finish sign-in properly.
+  const sp = request.nextUrl.searchParams;
+  if (!request.nextUrl.pathname.startsWith("/auth/confirm") && !request.nextUrl.pathname.startsWith("/api/")
+      && (sp.has("code") || (sp.has("token_hash") && sp.has("type")))) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/confirm";
+    return NextResponse.redirect(url);
+  }
+  // Supabase errors on the link itself (e.g. expired) arrive as ?error_code=…
+  if (sp.has("error_code") && !request.nextUrl.pathname.startsWith("/auth/login")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    url.search = "?error=link_expired";
+    return NextResponse.redirect(url);
+  }
   let response = NextResponse.next({ request });
   if (!isSupabaseConfigured()) return response;
 

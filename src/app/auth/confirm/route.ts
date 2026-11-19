@@ -22,6 +22,14 @@ export async function GET(request: NextRequest) {
   } else if (code) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     ok = !error;
+    // The email is already confirmed by the time Supabase hands out a code. If the code can't be
+    // used here (link opened in another browser or on another phone), just ask them to sign in.
+    if (!ok && type !== "recovery") {
+      const url = new URL("/auth/login", origin);
+      url.searchParams.set("confirmed", "1");
+      if (next && next !== "/auth/continue") url.searchParams.set("next", next);
+      return NextResponse.redirect(url);
+    }
   }
 
   if (!ok) {
