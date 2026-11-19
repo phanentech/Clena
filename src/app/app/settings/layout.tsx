@@ -7,6 +7,8 @@ export default async function SettingsLayout({ children }: { children: React.Rea
   const has = (p: string) => membership.permissions.includes(p as never);
   const items = [
     { href: "/app/settings", label: "General", show: has("settings.manage") },
+    { href: "/app/settings/customer-app", label: "Customer app", show: has("settings.manage") },
+    { href: "/app/settings/branding", label: "Branding", show: has("settings.manage") },
     { href: "/app/settings/branches", label: "Branches", show: has("branches.manage") },
     { href: "/app/settings/workflow", label: "Order workflow", show: has("workflows.manage") },
     { href: "/app/settings/roles", label: "Roles & permissions", show: has("settings.manage") },

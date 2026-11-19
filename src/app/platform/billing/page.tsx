@@ -61,7 +61,7 @@ export default async function BillingPage() {
               </div>
               {g.key === "bank_transfer" ? (
                 <div className="flex flex-wrap items-end gap-3">
-                  <Field label="Currencies" htmlFor={`c-${g.key}`}><Input id={`c-${g.key}`} name="currencies" defaultValue={g.supported_currencies.join(", ")} className="w-72" /></Field>
+                  <Field label="Currencies" htmlFor={`c-${g.key}`} className="w-full sm:w-auto"><Input id={`c-${g.key}`} name="currencies" defaultValue={g.supported_currencies.join(", ")} className="w-full sm:w-72" /></Field>
                   <label className="flex h-9 items-center gap-2 text-[13px]"><input type="checkbox" name="is_enabled" defaultChecked={g.is_enabled} className="size-4 accent-navy-900" />Enabled</label>
                   <input type="hidden" name="mode" value="live" />
                   {manage && <SubmitButton size="sm" variant="outline" pendingLabel="…">Save</SubmitButton>}

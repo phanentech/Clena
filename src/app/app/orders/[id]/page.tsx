@@ -84,6 +84,9 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
                 <div className="flex justify-between"><dt className="text-muted">Subtotal</dt><dd>{formatMoney(order.subtotal, order.currency)}</dd></div>
                 {Number(order.discount_total) > 0 && <div className="flex justify-between"><dt className="text-muted">Discount</dt><dd>−{formatMoney(order.discount_total, order.currency)}</dd></div>}
                 {Number(order.tax_total) > 0 && <div className="flex justify-between"><dt className="text-muted">Tax</dt><dd>{formatMoney(order.tax_total, order.currency)}</dd></div>}
+                {Number(order.service_fee) > 0 && <div className="flex justify-between"><dt className="text-muted">Service charge</dt><dd>{formatMoney(order.service_fee, order.currency)}</dd></div>}
+                {Number(order.delivery_fee) > 0 && <div className="flex justify-between"><dt className="text-muted">Collection & delivery</dt><dd>{formatMoney(order.delivery_fee, order.currency)}</dd></div>}
+                {order.promo_code && <div className="flex justify-between"><dt className="text-muted">Promo code</dt><dd className="tnum">{order.promo_code}</dd></div>}
                 <div className="flex justify-between border-t border-line pt-1 font-bold"><dt>Total</dt><dd>{formatMoney(order.total, order.currency)}</dd></div>
                 <div className="flex justify-between"><dt className="text-muted">Paid</dt><dd>{formatMoney(order.amount_paid, order.currency)}</dd></div>
                 <div className="flex justify-between font-semibold"><dt>Balance</dt><dd>{formatMoney(balance, order.currency)}</dd></div>
@@ -150,8 +153,17 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             <dl className="space-y-2">
               <div className="flex justify-between gap-3"><dt className="text-muted">Expected</dt><dd>{formatDateTime(order.expected_at)}</dd></div>
               <div className="flex justify-between gap-3"><dt className="text-muted">Completed</dt><dd>{formatDateTime(order.completed_at)}</dd></div>
-              <div className="flex justify-between gap-3"><dt className="text-muted">Source</dt><dd className="capitalize">{order.source}</dd></div>
+              <div className="flex justify-between gap-3"><dt className="text-muted">Source</dt><dd>{order.source === "portal" ? "Customer app" : <span className="capitalize">{order.source}</span>}</dd></div>
+              {order.pickup_at && <div className="flex justify-between gap-3"><dt className="text-muted">{order.pickup_required ? "Collection" : "Drop-off"}</dt><dd>{formatDateTime(order.pickup_at)}</dd></div>}
+              {order.cancelled_at && <div className="flex justify-between gap-3"><dt className="text-muted">Cancelled</dt><dd>{formatDateTime(order.cancelled_at)}</dd></div>}
             </dl>
+            {(order.pickup_address || order.delivery_address) && (
+              <div className="mt-4 grid gap-2 rounded-xl bg-canvas p-3">
+                {order.pickup_address && <p><span className="block text-xs text-muted">Collect from</span>{order.pickup_address}</p>}
+                {order.delivery_address && <p><span className="block text-xs text-muted">Deliver to</span>{order.delivery_address}</p>}
+              </div>
+            )}
+            {order.cancel_reason && <p className="mt-3 text-xs text-danger-600">Cancelled: {order.cancel_reason}</p>}
             {order.notes && <p className="mt-4 whitespace-pre-wrap rounded-xl bg-canvas p-3">{order.notes}</p>}
           </Card>
         </div>

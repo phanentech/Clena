@@ -30,8 +30,17 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader title={term ? `Results for "${term}"` : "Search"} description="Search customers by name, phone or email, and orders by number." />
+      <form action="/app/search" method="get" role="search" className="mb-5 flex gap-2">
+        <label htmlFor="search-page-q" className="sr-only">Search</label>
+        <div className="relative flex-1">
+          <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-faint" />
+          <input id="search-page-q" name="q" defaultValue={q} autoFocus={!term} placeholder="Name, phone, email or order number"
+            className="h-11 w-full rounded-lg border border-line-strong bg-surface ps-9 pe-3 text-[14px] placeholder:text-faint focus:border-navy-700 focus:outline-none" />
+        </div>
+        <button type="submit" className="h-11 shrink-0 rounded-lg bg-navy-900 px-4 text-[13px] font-semibold text-white">Search</button>
+      </form>
       {term.length < 2 ? (
-        <Card><EmptyState icon={<Search />} title="Type at least two characters" description="Use the search box at the top of any page." /></Card>
+        <Card><EmptyState icon={<Search />} title="Type at least two characters" description="Search by name, phone, email or order number." /></Card>
       ) : !cs.length && !os.length ? (
         <Card><EmptyState icon={<Search />} title="Nothing matches" description="Check the spelling, or search a phone number without the country code." /></Card>
       ) : (

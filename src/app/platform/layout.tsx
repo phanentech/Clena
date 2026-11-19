@@ -36,15 +36,15 @@ export default async function PlatformLayout({ children }: { children: React.Rea
     <div className="min-h-dvh bg-canvas">
       <header className="border-b border-line bg-surface">
         <div className="mx-auto flex h-14 max-w-[1400px] items-center justify-between px-6">
-          <div className="flex items-center gap-3">
-            <LogoMark className="size-7" />
-            <span className="text-[14px] font-semibold">Clena platform</span>
-            <Badge tone="info">{access.roleName}</Badge>
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <LogoMark className="size-7 shrink-0" />
+            <span className="whitespace-nowrap text-[14px] font-semibold"><span className="hidden sm:inline">Clena </span>Platform</span>
+            <Badge tone="info" className="whitespace-nowrap">{access.roleName}</Badge>
           </div>
-          <div className="flex items-center gap-4 text-[13px]">
-            <Link href="/app/dashboard" className="text-muted hover:text-ink">Business app</Link>
-            <span className="hidden text-muted sm:inline">{user.email}</span>
-            <form action={signOut}><button type="submit" className="flex items-center gap-1.5 text-muted hover:text-ink"><LogOut className="size-4" />Sign out</button></form>
+          <div className="flex shrink-0 items-center gap-3 text-[13px] sm:gap-4">
+            <Link href="/app/dashboard" className="whitespace-nowrap text-muted hover:text-ink"><span className="sm:hidden">App</span><span className="hidden sm:inline">Business app</span></Link>
+            <span className="hidden text-muted md:inline">{user.email}</span>
+            <form action={signOut}><button type="submit" aria-label="Sign out" className="flex items-center gap-1.5 whitespace-nowrap text-muted hover:text-ink"><LogOut className="size-4" /><span className="hidden sm:inline">Sign out</span></button></form>
           </div>
         </div>
         <div className="mx-auto max-w-[1400px] px-4"><PlatformTabs tabs={tabs} /></div>

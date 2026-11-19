@@ -98,7 +98,7 @@ export default async function PlansPage() {
       <Card>
         <CardHeader title="Add a currency" description="Adds the currency to every plan with no price yet. Set the prices above to make it available." />
         <ActionForm action={addCurrency} resetOnSuccess className="flex gap-2 p-4">
-          <Input name="currency" placeholder="e.g. GHS, KES, EUR, XOF" maxLength={3} className="w-48 uppercase" aria-label="Currency code" />
+          <Input name="currency" placeholder="e.g. GHS, KES, EUR, XOF" maxLength={3} className="w-full max-w-48 uppercase" aria-label="Currency code" />
           <SubmitButton variant="outline" pendingLabel="Adding…">Add currency</SubmitButton>
         </ActionForm>
       </Card>
